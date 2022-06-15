@@ -22674,7 +22674,7 @@ MonoBehaviour:
   baseGameplayC: {fileID: 1637053455}
   baseInput: {fileID: 915875793}
   baseEnd: {fileID: 508449293}
-  currentGamestate: 0
+  currentGamestate: 3
 --- !u!114 &1624189231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22688,8 +22688,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   highlightColorList:
-  - {r: 0.18039216, g: 0.7490196, b: 0.5686275, a: 1}
   - {r: 0.5137255, g: 0.3764706, b: 0.7647059, a: 1}
+  - {r: 0.18039216, g: 0.7490196, b: 0.5686275, a: 1}
   distributionKind: 0
 --- !u!1 &1634130785
 GameObject:
@@ -28883,6 +28883,30 @@ MonoBehaviour:
   onActivated:
     m_PersistentCalls:
       m_Calls:
+      - m_Target: {fileID: 2118574715}
+        m_TargetAssemblyTypeName: DISgameplaySettings, Assembly-CSharp
+        m_MethodName: StartUp
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 2118574716}
+        m_TargetAssemblyTypeName: DISgameplayInput, Assembly-CSharp
+        m_MethodName: StartUp
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
       - m_Target: {fileID: 2118574714}
         m_TargetAssemblyTypeName: DISgameplayManager, Assembly-CSharp
         m_MethodName: StartUp
@@ -28953,17 +28977,20 @@ MonoBehaviour:
   bottomLines: 5
   topLines: 0
   elementsPerLine: 3
-  scrollEnabled: 0
   edgePiecesPercentage: 0
   containsMiddlePieces: 0
   groupsWithMiddlePiecesPercentage: 0
-  timerEnabled: 0
   xPositions: []
   yPosBottomLines: []
   yPosTopLines: []
   yPosConstruction: 0
   yTopEdgeConstruction: 0
   yBotEdgeConstruction: 0
+  scrollEnabled: 0
+  scrollSpeed: 0
+  scrollMode: 0
+  scrollDirectionList: 
+  timerEnabled: 0
   totalTime: -60
   connectorElements:
   - name: LeftFemale
@@ -28972,141 +28999,225 @@ MonoBehaviour:
       gameObjects2D:
       - name: LeftCircle
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 52358f4a250a5904e920ad041d2406b9, type: 3}
+        - {fileID: 2294891193549933544, guid: cf7162a8671e73f44a573fdbfbea3b90, type: 3}
+        - {fileID: 2294891193549933544, guid: a1f4ad081f8cd2348b27fa6325e4e086, type: 3}
+        - {fileID: 2294891193549933544, guid: 7d229c1ae040ba9439669d39a8642625, type: 3}
       - name: LeftDiamond
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: b490852058ad7464c82c1fcf47d2e18f, type: 3}
+        - {fileID: 2294891193549933544, guid: bfe1a93e4def7f145905d83532896fb6, type: 3}
+        - {fileID: 2294891193549933544, guid: 63ff377c88c54ee4bbd23cc2579dd8bb, type: 3}
+        - {fileID: 2294891193549933544, guid: c198b7f7a2aa2e24d88ce9135e95e4ce, type: 3}
       - name: LeftHexagon
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 17d43f1d71e08474481d108d64a575e3, type: 3}
+        - {fileID: 2294891193549933544, guid: 0f71a756f0f71d44caf0e3038d169d0c, type: 3}
+        - {fileID: 2294891193549933544, guid: fa7be6eb6565ad54686474c2378c54e0, type: 3}
+        - {fileID: 2294891193549933544, guid: 6cb024910212a274e91d8f1ae37f8abf, type: 3}
       - name: LeftSquare
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 138143e5f0ea9e24e9008f9a76662286, type: 3}
+        - {fileID: 2294891193549933544, guid: 8a3d5f4fbcbaffe478bf0f63d2bb8e85, type: 3}
+        - {fileID: 2294891193549933544, guid: 01abf803f12767e44a172bfd38707328, type: 3}
+        - {fileID: 2294891193549933544, guid: fc96c134c8af02e4e8723557230e6b55, type: 3}
     - name: RightMale
       gameObjects2D:
       - name: LeftCircle
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 23e459d8c884fe34da21d3c9b0faa030, type: 3}
+        - {fileID: 2294891193549933544, guid: fe163e49617359449a6445eacc5096a3, type: 3}
+        - {fileID: 2294891193549933544, guid: d81f9239bb161b2408c451cd03c46e7b, type: 3}
+        - {fileID: 2294891193549933544, guid: 4f174729bb43ced44969ca74c7b0c13e, type: 3}
       - name: LeftDiamond
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: e64e14e7c172ce74a86b77196c59a4be, type: 3}
+        - {fileID: 2294891193549933544, guid: e83f783df604b8446a2ca7b6a5b18316, type: 3}
+        - {fileID: 2294891193549933544, guid: 012072fbb09c331449d56eb0fa703766, type: 3}
+        - {fileID: 2294891193549933544, guid: 812d66dcbc527764abe259797fa22339, type: 3}
       - name: LeftHexagon
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 75c5f960343fb5e46b4ee3445450ec1e, type: 3}
+        - {fileID: 2294891193549933544, guid: 551fdbe3d2a6c5c488a357a5005a7a3c, type: 3}
+        - {fileID: 2294891193549933544, guid: bb760d504ebe87f44be6e1f35a88168e, type: 3}
+        - {fileID: 2294891193549933544, guid: 4366d91965b78364297044d86f57a0fe, type: 3}
       - name: LeftSquare
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: a849f4a2fb75d164fa5a7c64bdff3d6c, type: 3}
+        - {fileID: 2294891193549933544, guid: 9cd0ebe1cf80df84fabf476314763f6e, type: 3}
+        - {fileID: 2294891193549933544, guid: 6050f295f473ca048a923cc00b40c031, type: 3}
+        - {fileID: 2294891193549933544, guid: 8032b98aa7cf9604ab89e3b97357402c, type: 3}
   - name: LeftMale
     gameObjects3D:
     - name: RightFemale
       gameObjects2D:
       - name: LeftCircle
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: d2dd1ca2a2fc57f428da76a8db906b77, type: 3}
+        - {fileID: 2294891193549933544, guid: 7d5e7d359616afe408984f0485f1b0b4, type: 3}
+        - {fileID: 2294891193549933544, guid: 75dd38f47b982484299bcf1c6d229f4e, type: 3}
+        - {fileID: 2294891193549933544, guid: 399cf204fe2fd674caf9ad58daf0efd2, type: 3}
       - name: LeftDiamond
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: fa4269e43c67d9b439be71b29d7c70ad, type: 3}
+        - {fileID: 2294891193549933544, guid: be5bd6d0354ccfe469a9311a7e68cb34, type: 3}
+        - {fileID: 2294891193549933544, guid: e6373418ff3e86244a2b8c35b5696cc1, type: 3}
+        - {fileID: 2294891193549933544, guid: c4391dabbf24ff54184a9187806a5dad, type: 3}
       - name: LeftHexagon
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 39c114a14ff336b4682e9133839531a7, type: 3}
+        - {fileID: 2294891193549933544, guid: 42189aac3c5725e4aacb1e60b67605ea, type: 3}
+        - {fileID: 2294891193549933544, guid: 1ae98af9dbf58674791690691796c949, type: 3}
+        - {fileID: 2294891193549933544, guid: 77d5cac38e8971845bcf446c8ee697ae, type: 3}
       - name: LeftSquare
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 985a54c9898369743afcbda2c87209b2, type: 3}
+        - {fileID: 2294891193549933544, guid: 5742c3de2316c2f4389ca648bcaa4945, type: 3}
+        - {fileID: 2294891193549933544, guid: fcdbbcff3410da441a8f3ef9b36c58ca, type: 3}
+        - {fileID: 2294891193549933544, guid: f6c3bced412784b4e93ea672f75d16a8, type: 3}
     - name: RightMale
       gameObjects2D:
       - name: LeftCircle
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: bc1acd12d74e97c478db6ad71b92d1cf, type: 3}
+        - {fileID: 2294891193549933544, guid: a70604bf9fe621c4e9b5e0cd7748a39b, type: 3}
+        - {fileID: 2294891193549933544, guid: ef3d338ca4d60324c82bec9c7e29d4b8, type: 3}
+        - {fileID: 2294891193549933544, guid: 7d5b2404d13f3294b9b400e4d588dfd9, type: 3}
       - name: LeftDiamond
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 25ae5db845640f9429adf01c336cd79b, type: 3}
+        - {fileID: 2294891193549933544, guid: 855cbfebc98b40d4ba14de01fae6040e, type: 3}
+        - {fileID: 2294891193549933544, guid: 41761b37add40974e93c32d24fa89531, type: 3}
+        - {fileID: 2294891193549933544, guid: 301fb66999884f248b6acbd6535bc4c9, type: 3}
       - name: LeftHexagon
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 01d25fb6a7bd1294b8941c0a3725f403, type: 3}
+        - {fileID: 2294891193549933544, guid: b98adf62cc5e94f42bdf7691f91c04b4, type: 3}
+        - {fileID: 2294891193549933544, guid: e12cc85465f54784db146b6ab1a8c710, type: 3}
+        - {fileID: 2294891193549933544, guid: d7b1bb3d8178e374da6e344201c91484, type: 3}
       - name: LeftSquare
         gameObjects:
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
-        - {fileID: 0}
+        - {fileID: 2294891193549933544, guid: 5e4039bab0a94af4e829313a8cb8bf59, type: 3}
+        - {fileID: 2294891193549933544, guid: 67f1c879e33fdf34eb7b2266584d37c3, type: 3}
+        - {fileID: 2294891193549933544, guid: 8a161c29b6205b1469a1af65f9c7cced, type: 3}
+        - {fileID: 2294891193549933544, guid: 5be4ad3a67240244e8c0e00b15cec043, type: 3}
   leftEdgeElements:
   - name: Female
     gameObjects:
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
+    - {fileID: 2294891193549933544, guid: 5fc5c4251e382994aa8002ec901b63ca, type: 3}
+    - {fileID: 2294891193549933544, guid: ce7e2fef521a7704da356f9defa8190d, type: 3}
+    - {fileID: 2294891193549933544, guid: 08c13d58f71f0bd46a8a04fcb1d6f398, type: 3}
+    - {fileID: 2294891193549933544, guid: d67f89eb7ef389d42a0ca7a29b27fb5f, type: 3}
   - name: Male
     gameObjects:
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
+    - {fileID: 2294891193549933544, guid: adcf13e40a1070c40aca05f611ff62a0, type: 3}
+    - {fileID: 2294891193549933544, guid: ef15acf59e42cd243898cbd2cf1c80ee, type: 3}
+    - {fileID: 2294891193549933544, guid: d1a4309e7533b02409071f2d71471fb7, type: 3}
+    - {fileID: 2294891193549933544, guid: 5d4a6791ddf4f834fb7b1155e46eff73, type: 3}
   rightEdgeElements:
   - name: Female
     gameObjects:
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
+    - {fileID: 2294891193549933544, guid: b6d1c1008df60dd4b8ead720bb282f73, type: 3}
+    - {fileID: 2294891193549933544, guid: a7c71ea73b0561e4586ceea0df0a140f, type: 3}
+    - {fileID: 2294891193549933544, guid: f4c0e936de608ea4c997b7689f0f542f, type: 3}
+    - {fileID: 2294891193549933544, guid: f6b4779c547cdb84daee53beca8cd86d, type: 3}
   - name: Male
     gameObjects:
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-    - {fileID: 0}
-  elementWidth: 0
-  elementHeight: 0
-  horizontalDistanceBetweeenElements: 0
-  minVerticalDistanceBetweeenElements: 0
-  comfyVerticalDistanceBetweeenElements: 0
-  minVerticalConstructionSpacePadding: 0
-  comfyVerticalConstructionSpacePadding: 0
+    - {fileID: 2294891193549933544, guid: 5173006c88a28114aa94e4fc76f706b0, type: 3}
+    - {fileID: 2294891193549933544, guid: 542abf86d5b6ff945a788af65c3b3392, type: 3}
+    - {fileID: 2294891193549933544, guid: d6af765e5e7509148a9f3831fd4f0ba5, type: 3}
+    - {fileID: 2294891193549933544, guid: bfa284bd9cae85a448fd92f174a0ed4e, type: 3}
+  connectionDistanceAtScale1: 2.19
+  connectionDistance: 0
+  tryConnectionRangeAtScale1: 2.9
+  tryConnectionRange: 0
+  minDotUpRange: -0.4
+  maxDotUpRange: 0.4
+  snapToConnectedPositionDuration: 0.4
+  snapToConnectedPositionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  animateBackToAnchorDuration: 0.5
+  animateBackToAnchorCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  fadeOutDuration: 2
+  fadeOutCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 1
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  elementWidthAtScale1: 3.4
+  elementWidth: 1.77
+  elementHeightAtScale1: 1.8
+  elementHeight: 0.94
+  elementScale: 0
+  horizontalDistanceBetweeenElements: 0.25
+  minVerticalDistanceBetweeenElements: 0.25
+  comfyVerticalDistanceBetweeenElements: 0.5
+  minVerticalConstructionSpacePadding: 0.4
+  comfyVerticalConstructionSpacePadding: 0.6
 --- !u!114 &2118574716
 MonoBehaviour:
   m_ObjectHideFlags: 0
