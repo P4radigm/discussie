@@ -33,9 +33,11 @@ public class DISelementBehaviour : MonoBehaviour
     [Space(10)]
     public MaleFemaleType leftMF;
     public ConnnectionType leftConnector;
+    [HideInInspector] public bool leftHasConnection = false;
     [Space(20)]
     public MaleFemaleType rightMF;
     public ConnnectionType rightConnector;
+    [HideInInspector] public bool rightHasConnection = false;
 
     [HideInInspector] public DISelementBehaviour parentElement;
     [HideInInspector] public Vector3 offsetToParentElement;
@@ -57,6 +59,8 @@ public class DISelementBehaviour : MonoBehaviour
 
 	private void OnEnable()
 	{
+        if(leftConnector == ConnnectionType.edge) { leftHasConnection = true; }
+        if(rightConnector == ConnnectionType.edge) { rightHasConnection = true; }
         parentElement = this;
         offsetToParentElement = Vector3.zero;
         connectedElements.Add(this);
@@ -94,46 +98,66 @@ public class DISelementBehaviour : MonoBehaviour
             return;
 		}
 
-        manager.elementsInConstructionArea.Add(this.gameObject);
+        if (!manager.elementsInConstructionArea.Contains(this.gameObject))
+        {
+            manager.elementsInConstructionArea.Add(this.gameObject);
+        }
 
         DISelementBehaviour elementToConnectTo = null;
         float rangeToPossibleElement = Mathf.Infinity;
         bool directionBool = false;
         //Search for components that could connect within connection range
+        Debug.Log($"{gameObject.name} is searching for a connection");
         for (int i = 0; i < manager.elementsInConstructionArea.Count; i++)
 		{
+            //Debug.Log($"{gameObject.name} is tryig a connection with {manager.elementsInConstructionArea[i].gameObject.name}");
             DISelementBehaviour OtherEB = manager.elementsInConstructionArea[i].GetComponent<DISelementBehaviour>();
 
 			if (connectedElements.Contains(OtherEB))
 			{
+                if (OtherEB != this) { Debug.Log($"{gameObject.name} already shares a connection with {manager.elementsInConstructionArea[i].gameObject.name}"); };
                 continue; //Either self or already connected element
 			}
             
-            if (Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position) > settings.connectionDistance)
+            if (Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position) > settings.tryConnectionRange)
 			{
+                Debug.Log($"{gameObject.name} is too far away from {manager.elementsInConstructionArea[i].gameObject.name}, {Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position)} > {settings.tryConnectionRange}");
                 continue; //The element is too far away
 			}
 
             float dotLeft = Vector3.Dot((OtherEB.ownConnectionPivot.position - ownConnectionPivot.position).normalized, Vector3.left);
             bool isLeft = dotLeft > 0 ? true : false; //Checks if this element is left of the element its trying to connect to
             float dotUp = Vector3.Dot((OtherEB.ownConnectionPivot.position - ownConnectionPivot.position).normalized, Vector3.up);
-            if (dotUp < settings.minDotUpRange && dotUp > settings.maxDotUpRange)
+            if (dotUp < settings.minDotUpRange || dotUp > settings.maxDotUpRange)
             {
+                Debug.Log($"{gameObject.name} angled positions is too far off {manager.elementsInConstructionArea[i].gameObject.name}, {dotUp} < {settings.minDotUpRange} || {dotUp} > {settings.maxDotUpRange}");
                 continue; //Angle to the piece is too far off
+            }
+
+            if ((isLeft ? leftConnector : rightConnector) != (isLeft ? OtherEB.rightConnector : OtherEB.leftConnector) || (isLeft ? leftMF : rightMF) == (isLeft ? OtherEB.rightMF : OtherEB.leftMF))
+            {
+                Debug.Log($"{gameObject.name}'s connector is not compatible with {manager.elementsInConstructionArea[i].gameObject.name}, this connector = {(isLeft ? leftMF : rightMF)}.{(isLeft ? leftConnector : rightConnector)}, other connector = {(isLeft ? OtherEB.rightMF : OtherEB.leftMF)}.{(isLeft ? OtherEB.rightConnector : OtherEB.leftConnector)}");
+                continue; //Another unconnected element is closer, so connecting to that one instead
+            }
+
+			//Check if already connected to another connector on this connection
+            if((isLeft ? leftHasConnection : rightHasConnection))
+			{
+                Debug.Log($"{gameObject.name} is trying to connect to a connector that has another connection already {manager.elementsInConstructionArea[i].gameObject.name}");
+                continue; //The connection is already populated
             }
 
             if (Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position) >= rangeToPossibleElement)
             {
+                Debug.Log($"{gameObject.name} already has found an element that is closer that {manager.elementsInConstructionArea[i].gameObject.name}, {elementToConnectTo.gameObject.name} is closest");
                 continue; //Another unconnected element is closer, so connecting to that one instead
             }
 
-            if ((isLeft ? leftConnector : rightConnector) == (isLeft ? OtherEB.leftConnector : OtherEB.rightConnector) && (isLeft ? leftMF : rightMF) != (isLeft ? OtherEB.leftMF : OtherEB.rightMF) && (isLeft ? leftConnector : rightConnector) != ConnnectionType.edge)
-            {
-                //Connectors are compatible
-                elementToConnectTo = OtherEB;
-                directionBool = isLeft;
-                rangeToPossibleElement = Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position);
-            }
+            Debug.Log($"{gameObject.name} has decided that it wants to connect to {manager.elementsInConstructionArea[i].gameObject.name}, this element is to its {(isLeft ? "left" : "right")}");
+            //Connectors are compatible
+            elementToConnectTo = OtherEB;
+            directionBool = isLeft;
+            rangeToPossibleElement = Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position);
         }
 
         //Form connection
@@ -162,11 +186,12 @@ public class DISelementBehaviour : MonoBehaviour
 	{
 		for (int i = 0; i < connectedElements.Count; i++)
 		{
-            connectedElements[i].CalculateOffsetToParent();
+            connectedElements[i].CalculateOffsetToParent(); //0
             connectedElements[i].isAnimating = true;
             Vector3 ReleasePosition = connectedElements[i].transform.position;
             int LeftRightMultiplier = isLeft ? 1 : -1;
-            Vector3 ConnectPosition = connectElement.transform.position + new Vector3(settings.connectionDistance * (float)LeftRightMultiplier, 0, 0) + connectedElements[i].offsetToParentElement;
+            Vector3 ConnectPosition = connectElement.ownConnectionPivot.position + new Vector3((settings.connectionDistance * (float)LeftRightMultiplier) - (ownConnectionPivot.position.x - transform.position.x), 0, 0) + connectedElements[i].offsetToParentElement;
+            //anchorpos of connectedTo + connectiondistance*leftRightint + anchorpos.localposition
             //Animate to position
             float TimeValue = 0;
 
@@ -189,7 +214,7 @@ public class DISelementBehaviour : MonoBehaviour
         List<DISelementBehaviour> NewConnectedElementsList = new();
 		for (int i = 0; i < connectElement.connectedElements.Count; i++)
 		{
-            if (!NewConnectedElementsList.Contains(connectedElements[i])) { NewConnectedElementsList.Add(connectElement.connectedElements[i]); }
+            if (!NewConnectedElementsList.Contains(connectElement.connectedElements[i])) { NewConnectedElementsList.Add(connectElement.connectedElements[i]); }
         }
         if (!NewConnectedElementsList.Contains(this)) { NewConnectedElementsList.Add(this); }
 
@@ -200,6 +225,17 @@ public class DISelementBehaviour : MonoBehaviour
             NewConnectedElementsList[i].parentElement = connectElement;
             NewConnectedElementsList[i].CalculateOffsetToParent();
             if (NewConnectedElementsList[i].leftConnector == ConnnectionType.edge || NewConnectedElementsList[i].rightConnector == ConnnectionType.edge) { EdgeCounter++; }
+        }
+
+		if (!isLeft)
+		{
+            connectElement.leftHasConnection = true;
+            rightHasConnection = true;
+        }
+		else
+		{
+            connectElement.rightHasConnection = true;
+            leftHasConnection = true;
         }
 
         //Check for completion
@@ -215,7 +251,8 @@ public class DISelementBehaviour : MonoBehaviour
 
     public void CalculateOffsetToParent()
 	{
-        offsetToParentElement = parentElement.transform.position - transform.position;
+        //offsetToParentElement = parentElement.transform.position - transform.position;
+        offsetToParentElement = transform.position - parentElement.transform.position;
 	}
 
     public void PartOfCompletedGroup()
@@ -255,8 +292,8 @@ public class DISelementBehaviour : MonoBehaviour
 
         while (TimeValue < 1)
         {
-            TimeValue += Time.deltaTime / settings.animateBackToAnchorDuration;
-            float EvaluatedTimeValue = settings.animateBackToAnchorCurve.Evaluate(TimeValue);
+            TimeValue += Time.deltaTime / settings.fadeOutDuration;
+            float EvaluatedTimeValue = settings.fadeOutCurve.Evaluate(TimeValue);
             Color NewCol = Color.Lerp(OriginalColor, TransperantColor, EvaluatedTimeValue);
             SR.color = NewCol;
 
@@ -265,5 +302,25 @@ public class DISelementBehaviour : MonoBehaviour
         queForDestruction = true;
         isAnimating = false;
         this.enabled = false;
+    }
+
+    public IEnumerator AnimateFadeIn(float duration, AnimationCurve curve)
+    {
+        //Fade out
+        isAnimating = true;
+        float TimeValue = 0;
+        SpriteRenderer SR = GetComponent<SpriteRenderer>();
+        Color OriginalColor = SR.color;
+
+        while (TimeValue < 1)
+        {
+            TimeValue += Time.deltaTime / duration;
+            float EvaluatedTimeValue = curve.Evaluate(TimeValue);
+            Color NewCol = Color.Lerp(OriginalColor, col, EvaluatedTimeValue);
+            SR.color = NewCol;
+
+            yield return null;
+        }
+        isAnimating = false;
     }
 }

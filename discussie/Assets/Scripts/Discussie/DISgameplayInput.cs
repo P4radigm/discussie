@@ -39,8 +39,10 @@ public class DISgameplayInput : MonoBehaviour
                 RaycastHit2D hit = Physics2D.Raycast(_Ray.origin, _Ray.direction);
                 if (hit == true && hit.collider != null)
                 {
-                    if(hit.collider.GetComponent<DISelementBehaviour>() != null && hit.collider.GetComponent<DISelementBehaviour>().enabled == true)
+                    DISelementBehaviour EB = hit.collider.GetComponent<DISelementBehaviour>();
+                    if (EB != null && EB.enabled == true)
 					{
+                        
                         //Pair the unit & finger
                         InteractedElement _NewInteraction = new();
                         _NewInteraction.attachedFingerID = Input.GetTouch(i).fingerId;
@@ -51,7 +53,15 @@ public class DISgameplayInput : MonoBehaviour
 
                         interactingElements.Add(_NewInteraction);
                         //Update isDragged status of Unit
-                        hit.collider.gameObject.GetComponent<DISelementBehaviour>().isDragged = true;
+                        EB.isDragged = true;
+                        if(EB.parentElement != EB)
+						{
+							for (int j = 0; j < EB.connectedElements.Count; j++)
+							{
+                                EB.connectedElements[j].parentElement = EB;
+                                EB.connectedElements[j].CalculateOffsetToParent();
+                            }
+						}
                         //disable unit collider?
                     }
                 }

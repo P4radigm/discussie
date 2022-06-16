@@ -99,6 +99,10 @@ public class DISgameplaySettings : MonoBehaviour
 
 
 	//Element behaviour settings
+	private void Awake()
+	{
+		if (scrollEnabled) { elementsPerLine = 7; }
+	}
 
 	public void StartUp()
 	{
@@ -113,14 +117,20 @@ public class DISgameplaySettings : MonoBehaviour
 
 	private void AdjustMeasurementsForScreenAspect()
 	{
+		int amountOfPositions = elementsPerLine;
+		if (scrollEnabled) { amountOfPositions = 3; }
 		//Scale adjustments based on screen aspect ratio (vertical screen world space), elementWidth & elementHeight
 		float horizontalWorldScreenDistance = platformManager.WorldScreenBotRightCoords.x - platformManager.WorldScreenBotLeftCoords.x;
-		elementWidth = (horizontalWorldScreenDistance - (horizontalDistanceBetweeenElements * ((float)elementsPerLine + 2f))) / elementsPerLine; //4.6 - (0 * (3-1) / 3)
+		elementWidth = (horizontalWorldScreenDistance - (horizontalDistanceBetweeenElements * ((float)amountOfPositions + 2f))) / amountOfPositions; //4.6 - (0 * (3-1) / 3)
+		Debug.Log($"SET: elementWidth = {elementWidth}");
 		elementScale = elementWidth / elementWidthAtScale1;
-		Debug.Log($"elementScale = {elementScale}");
+		Debug.Log($"SET: elementScale = {elementScale}");
 		elementHeight = (elementScale) * elementHeightAtScale1;
+		Debug.Log($"SET: elementHeight = {elementHeight}");
 		connectionDistance = connectionDistanceAtScale1 * elementScale;
+		Debug.Log($"SET: connectionDistance = {connectionDistance}");
 		tryConnectionRange = tryConnectionRangeAtScale1 * elementScale;
+		Debug.Log($"SET: tryConnectionRange = {tryConnectionRange}");
 	}
 
 	private void CalculateXPositions()
@@ -366,9 +376,9 @@ public class DISgameplaySettings : MonoBehaviour
 					}
 				}
 
-				for (int i = 0; i < (topLines <= bottomLines ? topLines : bottomLines); i++)
+				for (int i = 0; i < (topLines <= bottomLines ? topLines : bottomLines); i++) //topLines = 3
 				{
-					scrollDirectionList.Add(scrollDirectionList[(topLines <= bottomLines ? bottomLines : topLines) - i]);
+					scrollDirectionList.Add(scrollDirectionList[(topLines <= bottomLines ? bottomLines : topLines) - i - 1]); //scrollDirectionList[topLines - 0]
 				}
 				break;
 			case ScrollDirectionModes.random:

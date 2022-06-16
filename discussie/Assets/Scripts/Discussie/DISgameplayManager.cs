@@ -14,6 +14,16 @@ public class DISgameplayManager : MonoBehaviour
 	[SerializeField] private TextMeshProUGUI topScoreDisplay;
 	[SerializeField] private TextMeshProUGUI bottomScoreDisplay;
 
+	[Header("Anim settings")]
+	[SerializeField] private float introTimeBeforeFirstSpawn;
+	[SerializeField] private float introAnimDuration;
+	[SerializeField] private AnimationCurve introAnimCurve;
+	[SerializeField] private float popInDuration;
+	[SerializeField] private AnimationCurve popInCurve;
+	[Space(10)]
+	[SerializeField] private float outroAnimDuration;
+	[SerializeField] private AnimationCurve outroAnimCurve;
+
 	private SequenceManager sequenceManager;
 	private DataManager dataManager;
 	private HighlightColorManager colorManager;
@@ -71,6 +81,7 @@ public class DISgameplayManager : MonoBehaviour
 			else
 			{
 				//Does contain middle pieces
+				int loopCounter = 0;
 				while (totalElementsAmount != 0)
 				{
 					float threePieceDecider = Random.value;
@@ -81,6 +92,7 @@ public class DISgameplayManager : MonoBehaviour
 						int maleFemaleDeciderLeft = Random.Range(0, 2);
 						int randomConnectionLeft = Random.Range(0, settings.leftEdgeElements[0].gameObjects.Length);
 						elementPool.Add(settings.leftEdgeElements[maleFemaleDeciderLeft].gameObjects[randomConnectionLeft]);
+						
 
 						//Generate Random Right edge piece
 						int maleFemaleDeciderRight = Random.Range(0, 2);
@@ -88,9 +100,10 @@ public class DISgameplayManager : MonoBehaviour
 						elementPool.Add(settings.rightEdgeElements[maleFemaleDeciderRight].gameObjects[randomConnectionRight]);
 
 						//Find Fitting middle piece
-						elementPool.Add(settings.connectorElements[maleFemaleDeciderLeft].gameObjects3D[maleFemaleDeciderRight].gameObjects2D[randomConnectionLeft].gameObjects[randomConnectionRight]);
+						elementPool.Add(settings.connectorElements[Mathf.Abs(maleFemaleDeciderLeft - 1)].gameObjects3D[Mathf.Abs(maleFemaleDeciderRight - 1)].gameObjects2D[randomConnectionLeft].gameObjects[randomConnectionRight]);
 						totalElementsAmount -= 3;
-
+						Debug.Log($"Spawned 3 piece at loop: {loopCounter}, leftedge = {maleFemaleDeciderLeft}.{randomConnectionLeft}, middlepiece = {Mathf.Abs(maleFemaleDeciderLeft - 1)}.{randomConnectionLeft}-{Mathf.Abs(maleFemaleDeciderRight - 1)}.{randomConnectionRight}, rightedge = {maleFemaleDeciderRight}.{randomConnectionRight}");
+						loopCounter++;
 					}
 					else if (totalElementsAmount >= 2)
 					{
@@ -100,7 +113,8 @@ public class DISgameplayManager : MonoBehaviour
 						elementPool.Add(settings.leftEdgeElements[MaleFemaleDecider].gameObjects[ConnectionDecider]);
 						elementPool.Add(settings.rightEdgeElements[Mathf.Abs(MaleFemaleDecider - 1)].gameObjects[ConnectionDecider]);
 						totalElementsAmount -= 2;
-						totalElementsAmount -= 2;
+						Debug.Log($"Spawned 2 piece at loop: {loopCounter}, leftedge = {MaleFemaleDecider}.{ConnectionDecider}, rightedge = {Mathf.Abs(MaleFemaleDecider - 1)}.{ConnectionDecider}");
+						loopCounter++;
 					}
 					else
 					{
@@ -111,6 +125,8 @@ public class DISgameplayManager : MonoBehaviour
 						if (LeftRightDecider == 0) { elementPool.Add(settings.leftEdgeElements[MaleFemaleDecider].gameObjects[ConnectionDecider]); }
 						else { elementPool.Add(settings.rightEdgeElements[Mathf.Abs(MaleFemaleDecider - 1)].gameObjects[ConnectionDecider]); }
 						totalElementsAmount -= 1;
+						Debug.Log($"Spawned 1 piece at loop: {loopCounter}");
+						loopCounter++;
 					}
 				}
 			}
@@ -181,20 +197,27 @@ public class DISgameplayManager : MonoBehaviour
 		{
 			for (int j = 0; j < settings.elementsPerLine; j++)
 			{
-				DISelementBehaviour EB = shuffledElementPool[i + elementsInPlayBot.Count].GetComponent<DISelementBehaviour>();
-				GameObject GO = SpawnElementAndAnchor($"{i}.{j}_{EB.leftConnector}-{EB.rightConnector}", shuffledElementPool[i + elementsInPlayBot.Count], new Vector3(settings.xPositions[j], settings.yPosTopLines[i], 0), colorManager.highlightColorList[1], settings.bottomLines + i, true);
+				DISelementBehaviour EB = shuffledElementPool[spawnedCounter].GetComponent<DISelementBehaviour>();
+				GameObject GO = SpawnElementAndAnchor($"{i}.{j}_{EB.leftConnector}-{EB.rightConnector}", shuffledElementPool[spawnedCounter], new Vector3(settings.xPositions[j], settings.yPosTopLines[i], 0), colorManager.highlightColorList[1], settings.bottomLines + i, true);
 
 				elementsInPlayTop.Add(GO);
 				elementsInPlay.Add(GO);
+				spawnedCounter++;
 			}
 		}
 
 		//Animate in start elements -> toplist normal (bot to top), botlist reversed (top to bot)
-		StartCoroutine(AnimateIn());
+		StartCoroutine(AnimateIn(elementsInPlayBot));
+		StartCoroutine(AnimateIn(elementsInPlayTop));
 	}
 
 	void Update()
 	{
+		if(settings == null)
+		{
+			return;
+		}
+
 		if (settings.scrollEnabled)
 		{
 			//Animate scroll based on settings
@@ -327,10 +350,24 @@ public class DISgameplayManager : MonoBehaviour
 		return GO;
 	}
 
-	private IEnumerator AnimateIn()
+	private IEnumerator AnimateIn(List<GameObject> elements)
 	{
 		//Animate in start elements -> toplist normal (bot to top), botlist reversed (top to bot)
-		yield return null;
+		float totalCurveTime = 0;
+		for (int i = 0; i < elements.Count; i++)
+		{
+			totalCurveTime += introAnimCurve.Evaluate((float)i / elements.Count);
+		}
+
+		yield return new WaitForSeconds(introTimeBeforeFirstSpawn);
+
+		for (int i = 0; i < elements.Count; i++)
+		{
+			DISelementBehaviour EB = elements[i].GetComponent<DISelementBehaviour>();
+			EB.StartCoroutine(EB.AnimateFadeIn(popInDuration, popInCurve));
+
+			yield return new WaitForSeconds(introAnimDuration / (float)elements.Count);
+		}
 	}
 
 	public void AddToScore(float scoreAddition)
