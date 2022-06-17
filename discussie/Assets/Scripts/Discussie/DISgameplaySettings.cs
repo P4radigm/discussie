@@ -44,15 +44,16 @@ public class DISgameplaySettings : MonoBehaviour
 	[HideInInspector] public List<float> xPositions = new List<float>(); 
 	[HideInInspector] public List<float> yPosBottomLines = new List<float>(); 
 	[HideInInspector] public List<float> yPosTopLines = new List<float>(); 
-	[HideInInspector] public float yPosConstruction;
-	[HideInInspector] public float yTopEdgeConstruction;
-	[HideInInspector] public float yBotEdgeConstruction;
+	public float yTopEdgeConstruction;
+	public float yPosConstruction;
+	public float yBotEdgeConstruction;
 	
 
 	[Header("Scroll Settings")]
 	public bool scrollEnabled;
 	public float scrollSpeed; //Might need to scale the speed based on horizontal screen space
 	public ScrollDirectionModes scrollMode;
+	public float scrollRangeOffset;
 	[HideInInspector] public List<int> scrollDirectionList = new List<int>(); //From bottom to top lines
 
 	[Header("Timer Settings")]
@@ -95,7 +96,15 @@ public class DISgameplaySettings : MonoBehaviour
 
 	private PlatformManager platformManager;
 
-	//Score calculation
+	[Header("Score settings")]
+	public int defaultElementScore; //10
+	public float sameColorMultiplier; //0.1
+	public float differentColorMultiplier; //0.3
+	public GameObject burstToScoreParticles;
+	public float displayIncrementSpeed; //0.3
+	public float vfxReachTime; //0.3
+	[ColorUsage(true, true)] public Color botVFXColor;
+	[ColorUsage(true, true)] public Color topVFXColor;
 
 
 	//Element behaviour settings
@@ -247,15 +256,19 @@ public class DISgameplaySettings : MonoBehaviour
 					{
 						yPosForCalc += comfyVerticalDistanceBetweeenElements * 0.5f;
 					}
-					yPosForCalc += comfyVerticalConstructionSpacePadding;
+					yPosForCalc += comfyVerticalDistanceBetweeenElements;
 					yPosForCalc += elementHeight / 2f;
 					yPosBottomLines.Add(yPosForCalc);
 					yPosForCalc += elementHeight / 2f;
 				}
 				yPosForCalc += comfyVerticalDistanceBetweeenElements;
 				yBotEdgeConstruction = yPosForCalc;
-				yTopEdgeConstruction = platformManager.WorldScreenTopLeftCoords.y - 2f * comfyVerticalDistanceBetweeenElements;
-				yPosConstruction = yBotEdgeConstruction + ((yTopEdgeConstruction - yBotEdgeConstruction) / 2f);
+				yPosForCalc += comfyVerticalConstructionSpacePadding;
+				yPosForCalc += elementHeight / 2f;
+				yPosConstruction = yPosForCalc;
+				yPosForCalc += elementHeight / 2f;
+				yPosForCalc += comfyVerticalConstructionSpacePadding;
+				yTopEdgeConstruction = yPosForCalc;
 				return;
 			}
 
@@ -266,15 +279,19 @@ public class DISgameplaySettings : MonoBehaviour
 				{
 					yPosForCalcMin += minVerticalDistanceBetweeenElements;
 				}
-				yPosForCalcMin += minVerticalConstructionSpacePadding;
+				yPosForCalcMin += minVerticalDistanceBetweeenElements;
 				yPosForCalcMin += elementHeight / 2f;
 				yPosBottomLines.Add(yPosForCalcMin);
 				yPosForCalcMin += elementHeight / 2f;
 			}
 			yPosForCalcMin += minVerticalDistanceBetweeenElements;
 			yBotEdgeConstruction = yPosForCalcMin;
-			yTopEdgeConstruction = platformManager.WorldScreenTopLeftCoords.y - 2f * minVerticalDistanceBetweeenElements;
-			yPosConstruction = yBotEdgeConstruction + ((yTopEdgeConstruction - yBotEdgeConstruction) / 2f);
+			yPosForCalcMin += minVerticalConstructionSpacePadding;
+			yPosForCalcMin += elementHeight / 2f;
+			yPosConstruction = yPosForCalcMin;
+			yPosForCalcMin += elementHeight / 2f;
+			yPosForCalcMin += minVerticalConstructionSpacePadding;
+			yTopEdgeConstruction = yPosForCalcMin;
 
 			//List bot to top Botlines (toplines don't exist)
 		}
@@ -299,15 +316,19 @@ public class DISgameplaySettings : MonoBehaviour
 					{
 						yPosForCalc -= comfyVerticalDistanceBetweeenElements * 0.5f;
 					}
-					yPosForCalc -= comfyVerticalConstructionSpacePadding;
+					yPosForCalc -= comfyVerticalDistanceBetweeenElements;
 					yPosForCalc -= elementHeight / 2f;
 					yPosBottomLines.Add(yPosForCalc);
 					yPosForCalc -= elementHeight / 2f;
 				}
 				yPosForCalc -= comfyVerticalDistanceBetweeenElements;
 				yTopEdgeConstruction = yPosForCalc;
-				yBotEdgeConstruction = platformManager.WorldScreenBotLeftCoords.y + 2f * comfyVerticalDistanceBetweeenElements;
-				yPosConstruction = yBotEdgeConstruction + ((yTopEdgeConstruction - yBotEdgeConstruction) / 2f);
+				yPosForCalc -= comfyVerticalConstructionSpacePadding;
+				yPosForCalc -= elementHeight / 2f;
+				yPosConstruction = yPosForCalc;
+				yPosForCalc -= elementHeight / 2f;
+				yPosForCalc -= comfyVerticalConstructionSpacePadding;
+				yBotEdgeConstruction = yPosForCalc;
 				return;
 			}
 
@@ -318,15 +339,19 @@ public class DISgameplaySettings : MonoBehaviour
 				{
 					yPosForCalcMin -= minVerticalDistanceBetweeenElements;
 				}
-				yPosForCalcMin -= minVerticalConstructionSpacePadding;
+				yPosForCalcMin -= minVerticalDistanceBetweeenElements;
 				yPosForCalcMin -= elementHeight / 2f;
 				yPosBottomLines.Add(yPosForCalcMin);
 				yPosForCalcMin -= elementHeight / 2f;
 			}
 			yPosForCalcMin -= minVerticalDistanceBetweeenElements;
 			yTopEdgeConstruction = yPosForCalcMin;
-			yBotEdgeConstruction = platformManager.WorldScreenBotLeftCoords.y + 2f * minVerticalDistanceBetweeenElements;
-			yPosConstruction = yBotEdgeConstruction + ((yTopEdgeConstruction - yBotEdgeConstruction) / 2f);
+			yPosForCalcMin -= minVerticalConstructionSpacePadding;
+			yPosForCalcMin -= elementHeight / 2f;
+			yPosConstruction = yPosForCalcMin;
+			yPosForCalcMin -= elementHeight / 2f;
+			yPosForCalcMin -= minVerticalConstructionSpacePadding;
+			yBotEdgeConstruction = yPosForCalcMin;
 		}
 
 		//List top to bot Toplines (botlines don't exist)

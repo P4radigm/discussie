@@ -7,12 +7,15 @@ public class DISgameplayManager : MonoBehaviour
 {
 	private DISgameplaySettings settings;
 	private DISgameplayInput input;
-	private List<GameObject> elementsInPlayTop = new List<GameObject>();
-	private List<GameObject> elementsInPlayBot = new List<GameObject>();
-	private List<GameObject> elementsInPlay = new List<GameObject>();
+	[HideInInspector] public List<GameObject> elementsInPlayTop = new List<GameObject>();
+	[HideInInspector] public List<GameObject> elementsInPlayBot = new List<GameObject>();
+	[HideInInspector] public List<GameObject> elementsInPlay = new List<GameObject>();
 	[HideInInspector] public List<GameObject> elementsInConstructionArea = new List<GameObject>();
-	[SerializeField] private TextMeshProUGUI topScoreDisplay;
-	[SerializeField] private TextMeshProUGUI bottomScoreDisplay;
+	public TextMeshProUGUI topScoreDisplay;
+	public TextMeshProUGUI bottomScoreDisplay;
+	[SerializeField] private RectTransform scoreHolder;
+	[SerializeField] private Transform topDashedLine;
+	[SerializeField] private Transform botDashedLine;
 
 	[Header("Anim settings")]
 	[SerializeField] private float introTimeBeforeFirstSpawn;
@@ -20,6 +23,9 @@ public class DISgameplayManager : MonoBehaviour
 	[SerializeField] private AnimationCurve introAnimCurve;
 	[SerializeField] private float popInDuration;
 	[SerializeField] private AnimationCurve popInCurve;
+	[SerializeField] private float waitToScrollSeconds;
+	[SerializeField] private float graphicsIntroAnimDuration;
+	[SerializeField] private AnimationCurve graphicsIntroAnimCurve;
 	[Space(10)]
 	[SerializeField] private float outroAnimDuration;
 	[SerializeField] private AnimationCurve outroAnimCurve;
@@ -27,6 +33,14 @@ public class DISgameplayManager : MonoBehaviour
 	private SequenceManager sequenceManager;
 	private DataManager dataManager;
 	private HighlightColorManager colorManager;
+
+	private bool introDone = false;
+
+	[Header("Score display settings")]
+	public int botScore = 0;
+	public int topScore = 0;
+	private float botDisplayScore = 0;
+	private float topDisplayScore = 0;
 
 	public void StartUp()
 	{
@@ -153,7 +167,7 @@ public class DISgameplayManager : MonoBehaviour
 				for (int i = 0; i < totalElementsAmount; i++)
 				{
 					float EdgePieceDecider = Random.value;
-					if (EdgePieceDecider < settings.edgePiecesPercentage)
+					if (EdgePieceDecider < (settings.edgePiecesPercentage / 100f))
 					{
 						//Spawn random edge piece
 						int LeftRightDecider = Random.Range(0, 2);
@@ -209,11 +223,21 @@ public class DISgameplayManager : MonoBehaviour
 		//Animate in start elements -> toplist normal (bot to top), botlist reversed (top to bot)
 		StartCoroutine(AnimateIn(elementsInPlayBot));
 		StartCoroutine(AnimateIn(elementsInPlayTop));
+
+		//Set graphics to correct positions and animate in
+		topDashedLine.position = new Vector3(0, settings.yTopEdgeConstruction, 0);
+		botDashedLine.position = new Vector3(0, settings.yBotEdgeConstruction, 0);
+		float canvasScaleFactor = GetComponentInChildren<Canvas>().scaleFactor;
+		//Debug.Log($"canvasScaleFactor = {canvasScaleFactor}");
+		scoreHolder.anchoredPosition = new Vector2(0, Camera.main.WorldToScreenPoint(new Vector3(0, settings.yPosConstruction, 0)).y / canvasScaleFactor);
+		bottomScoreDisplay.text = "0";
+		topScoreDisplay.text = "0";
+		StartCoroutine(AnimateInGraphics());
 	}
 
 	void Update()
 	{
-		if(settings == null)
+		if(settings == null || !introDone)
 		{
 			return;
 		}
@@ -236,12 +260,12 @@ public class DISgameplayManager : MonoBehaviour
 				}
 
 				//Detect whether element is out of range -> needs to be destroyed && Spawn in new element
-				if (Anchor.position.x < settings.xPositions[0] || Anchor.position.x > settings.xPositions[settings.xPositions.Count - 1])
+				if (Anchor.position.x < settings.xPositions[0] - settings.scrollRangeOffset || Anchor.position.x > settings.xPositions[settings.xPositions.Count - 1] + settings.scrollRangeOffset)
 				{
 					//Anchor is out of range
 
 					//Store Yposition and line for replacement Element
-					float xPosAtDestruction = Anchor.position.y;
+					float xPosAtDestruction = Anchor.position.x;
 					int spawnLine = EB.line;
 
 					//Destroy Anchor
@@ -252,8 +276,11 @@ public class DISgameplayManager : MonoBehaviour
 						EB.queForDestruction = true;
 					}
 
+					float leftScrollerAdjustedXPos = settings.xPositions[settings.xPositions.Count - 1] - (settings.xPositions[0] - xPosAtDestruction);
+					float rigthScrollerAdjustedXPos = settings.xPositions[0] + (xPosAtDestruction - settings.xPositions[settings.xPositions.Count - 1]);
+
 					//Spawn replacement Element on other side of the same line of destroyed element
-					float replacementXpos = settings.scrollDirectionList[spawnLine] == -1 ? settings.xPositions[settings.xPositions.Count - 1] - (xPosAtDestruction - settings.xPositions[0]) : settings.xPositions[0] + (xPosAtDestruction - settings.xPositions[settings.xPositions.Count - 1]);
+					float replacementXpos = settings.scrollDirectionList[spawnLine] == -1 ? leftScrollerAdjustedXPos : rigthScrollerAdjustedXPos;
 					float replacementYpos = spawnLine < settings.bottomLines ? settings.yPosBottomLines[spawnLine] : settings.yPosTopLines[spawnLine - settings.bottomLines];
 					Vector3 replacementSpawnLocation = new Vector3(replacementXpos, replacementYpos, 0);
 					//generate random (weighted) element
@@ -272,7 +299,7 @@ public class DISgameplayManager : MonoBehaviour
 					{
 						//Decide on edge or middle piece based on percentage
 						float EdgePieceDecider = Random.value;
-						if (EdgePieceDecider < settings.edgePiecesPercentage)
+						if (EdgePieceDecider < (settings.edgePiecesPercentage / 100f))
 						{
 							//Spawn random edge piece
 							int LeftRightDecider = Random.Range(0, 2);
@@ -293,7 +320,7 @@ public class DISgameplayManager : MonoBehaviour
 					}
 					//Instantiate Replacement Object
 					int newColorIndex = spawnLine < settings.bottomLines ? 0 : 1;
-					GameObject ReplacementElement = SpawnElementAndAnchor($"Replacement.{spawnLine}_{EB.leftConnector}-{EB.rightConnector}", elementPrefab, replacementSpawnLocation, colorManager.highlightColorList[newColorIndex], spawnLine, false);
+					GameObject ReplacementElement = SpawnElementAndAnchor($"Replacement.{spawnLine}_{elementPrefab.GetComponent<DISelementBehaviour>().leftConnector}-{elementPrefab.GetComponent<DISelementBehaviour>().rightConnector}", elementPrefab, replacementSpawnLocation, colorManager.highlightColorList[newColorIndex], spawnLine, false);
 
 					if (spawnLine < settings.bottomLines) { elementsInPlayTop.Add(ReplacementElement); }
 					else { elementsInPlayTop.Add(ReplacementElement); }
@@ -305,6 +332,23 @@ public class DISgameplayManager : MonoBehaviour
 			for (int i = 0; i < elementsInPlay.Count; i++)
 			{
 				DISelementBehaviour EB = elementsInPlay[i].GetComponent<DISelementBehaviour>();
+				for (int j = 0; j < elementsInPlay.Count; j++)
+				{
+					DISelementBehaviour OtherEB = elementsInPlay[j].GetComponent<DISelementBehaviour>();
+					if (EB.spawnAnchor != null && OtherEB.spawnAnchor != null && EB != OtherEB)
+					{
+						if (Vector3.Distance(EB.spawnAnchor.position, OtherEB.spawnAnchor.position) <= 0.1f)
+						{
+							elementsInPlay.RemoveAt(i);
+							elementsInPlayBot.Remove(EB.gameObject);
+							elementsInPlayTop.Remove(EB.gameObject);
+							Destroy(EB.gameObject);
+							i--;
+							continue;
+						}				
+					}
+				}
+
 				if (EB.queForDestruction && !EB.isAnimating)
 				{
 					//Remove object from lists and destroy gameObject
@@ -328,7 +372,16 @@ public class DISgameplayManager : MonoBehaviour
 			//Update timer
 		}
 
-		//Update score?
+		if(botDisplayScore < botScore)
+		{
+			botDisplayScore += settings.displayIncrementSpeed * Time.deltaTime;
+		}
+		bottomScoreDisplay.text = Mathf.RoundToInt(botDisplayScore).ToString();
+		if (topDisplayScore < topScore)
+		{
+			topDisplayScore += settings.displayIncrementSpeed * Time.deltaTime;
+		}
+		topScoreDisplay.text = Mathf.RoundToInt(topDisplayScore).ToString();
 	}
 
 	private GameObject SpawnElementAndAnchor(string Name, GameObject Element, Vector3 Location, Color color, int line, bool isTransparent)
@@ -337,13 +390,15 @@ public class DISgameplayManager : MonoBehaviour
 		GO.transform.localScale = Vector3.one * settings.elementScale;
 		DISelementBehaviour EB = GO.GetComponent<DISelementBehaviour>();
 		GO.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, isTransparent ? 0 : 1);
-		GameObject Anchor = Instantiate(new GameObject(), Location, Quaternion.identity, this.transform);
+		GameObject Anchor = new GameObject();
+		Anchor.transform.position = Location;
+		Anchor.transform.parent = this.transform;
 		EB.spawnAnchor = Anchor.transform;
 		EB.line = line;
 		EB.manager = this;
 		EB.settings = settings;
 		EB.input = input;
-		EB.colorType = color == colorManager.highlightColorList[0] ? DISelementBehaviour.Colour.green : DISelementBehaviour.Colour.purple;
+		EB.colorType = color == colorManager.highlightColorList[0] ? DISelementBehaviour.Colour.purple : DISelementBehaviour.Colour.green;
 		EB.col = color;
 		GO.name = $"{Name}.Element";
 		Anchor.name = $"{Name}.Anchor";
@@ -367,6 +422,43 @@ public class DISgameplayManager : MonoBehaviour
 			EB.StartCoroutine(EB.AnimateFadeIn(popInDuration, popInCurve));
 
 			yield return new WaitForSeconds(introAnimDuration / (float)elements.Count);
+		}
+
+		yield return new WaitForSeconds(waitToScrollSeconds);
+
+		introDone = true;
+	}
+
+	private IEnumerator AnimateInGraphics()
+	{
+		//Dashed lines
+		SpriteRenderer[] topDashedRenderer = topDashedLine.gameObject.GetComponentsInChildren<SpriteRenderer>();
+		SpriteRenderer[] botDashedRenderer = botDashedLine.gameObject.GetComponentsInChildren<SpriteRenderer>();
+		//Score displays
+		
+		//Background(s)?
+
+		float TimeValue = 0;
+
+		while (TimeValue < 1)
+		{
+			TimeValue += Time.deltaTime / graphicsIntroAnimDuration;
+			float EvaluatedTimeValue = graphicsIntroAnimCurve.Evaluate(TimeValue);
+			float NewAlpha = Mathf.Lerp(0, 1, EvaluatedTimeValue);
+
+			for (int i = 0; i < topDashedRenderer.Length; i++)
+			{
+				topDashedRenderer[i].color = new Color(topDashedRenderer[i].color.r, topDashedRenderer[i].color.g, topDashedRenderer[i].color.b, NewAlpha);
+			}
+			for (int i = 0; i < botDashedRenderer.Length; i++)
+			{
+				botDashedRenderer[i].color = new Color(botDashedRenderer[i].color.r, botDashedRenderer[i].color.g, botDashedRenderer[i].color.b, NewAlpha);
+			}
+
+			bottomScoreDisplay.color = new Color(bottomScoreDisplay.color.r, bottomScoreDisplay.color.g, bottomScoreDisplay.color.b, NewAlpha);
+			topScoreDisplay.color = new Color(topScoreDisplay.color.r, topScoreDisplay.color.g, topScoreDisplay.color.b, NewAlpha);
+
+			yield return null;
 		}
 	}
 

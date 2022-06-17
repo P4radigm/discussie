@@ -224,7 +224,7 @@ public class LocationBehaviour : MonoBehaviour
 
 	private void UpdateLidwoord()
 	{
-		staticText.text = "ik heb deze ervaring bij " + bL.selectableLocations[getClosestElementToMiddleIndex()].lidwoord + '\n' + '\n' + '\n' + "tegen gekomen";
+		staticText.text = "ik ben deze ervaring bij " + bL.selectableLocations[getClosestElementToMiddleIndex()].lidwoord + '\n' + '\n' + '\n' + "tegen gekomen";
 	}
 
 	private void UpdateTextElementColors() 

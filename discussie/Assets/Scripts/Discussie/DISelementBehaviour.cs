@@ -29,6 +29,7 @@ public class DISelementBehaviour : MonoBehaviour
     [HideInInspector] public bool isAnimating = false;
     [HideInInspector] public bool isInConstructionZone = false;
     [HideInInspector] public bool queForDestruction = false;
+    [HideInInspector] public bool hasSnapped = false;
 
     [Space(10)]
     public MaleFemaleType leftMF;
@@ -84,6 +85,7 @@ public class DISelementBehaviour : MonoBehaviour
 					{
                         StartCoroutine(connectedElements[i].AnimateFadeOut());
 					}
+                    return;
                 }
                 StartCoroutine(AnimateBack());                
             }
@@ -97,6 +99,8 @@ public class DISelementBehaviour : MonoBehaviour
             }
             return;
 		}
+
+        isInConstructionZone = true;
 
         if (!manager.elementsInConstructionArea.Contains(this.gameObject))
         {
@@ -186,6 +190,7 @@ public class DISelementBehaviour : MonoBehaviour
 	{
 		for (int i = 0; i < connectedElements.Count; i++)
 		{
+            connectedElements[i].parentElement = this;
             connectedElements[i].CalculateOffsetToParent(); //0
             connectedElements[i].isAnimating = true;
             Vector3 ReleasePosition = connectedElements[i].transform.position;
@@ -193,28 +198,26 @@ public class DISelementBehaviour : MonoBehaviour
             Vector3 ConnectPosition = connectElement.ownConnectionPivot.position + new Vector3((settings.connectionDistance * (float)LeftRightMultiplier) - (ownConnectionPivot.position.x - transform.position.x), 0, 0) + connectedElements[i].offsetToParentElement;
             //anchorpos of connectedTo + connectiondistance*leftRightint + anchorpos.localposition
             //Animate to position
-            float TimeValue = 0;
-
-            while (TimeValue < 1)
-            {
-                if (connectElement.isDragged) { yield break; } //element this is trying to connect to is being moved
-                TimeValue += Time.deltaTime / settings.snapToConnectedPositionDuration;
-                float EvaluatedTimeValue = settings.snapToConnectedPositionCurve.Evaluate(TimeValue);
-                Vector3 NewPos = Vector3.Lerp(ReleasePosition, ConnectPosition, EvaluatedTimeValue);
-
-                connectedElements[i].transform.position = NewPos;
-
-                yield return null;
-            }
-
-            connectedElements[i].isAnimating = false;
+            connectedElements[i].StartCoroutine(connectedElements[i].AnimateToSnapPosition(connectElement, ReleasePosition, ConnectPosition));
         }
-        
+
+        yield return new WaitForSeconds(settings.snapToConnectedPositionDuration);
+		for (int i = 0; i < connectedElements.Count; i++)
+		{
+            if (connectedElements[i].hasSnapped != true) { yield break; };
+            connectedElements[i].hasSnapped = false;
+        }
+
+
         //Form connection
         List<DISelementBehaviour> NewConnectedElementsList = new();
 		for (int i = 0; i < connectElement.connectedElements.Count; i++)
 		{
             if (!NewConnectedElementsList.Contains(connectElement.connectedElements[i])) { NewConnectedElementsList.Add(connectElement.connectedElements[i]); }
+        }
+        for (int i = 0; i < connectedElements.Count; i++)
+        {
+            if (!NewConnectedElementsList.Contains(connectedElements[i])) { NewConnectedElementsList.Add(connectedElements[i]); }
         }
         if (!NewConnectedElementsList.Contains(this)) { NewConnectedElementsList.Add(this); }
 
@@ -244,7 +247,7 @@ public class DISelementBehaviour : MonoBehaviour
 			//complete balloon
 			for (int i = 0; i < connectedElements.Count; i++)
 			{
-                connectedElements[i].PartOfCompletedGroup();
+                connectedElements[i].StartCoroutine(connectedElements[i].PartOfCompletedGroup());
             }
 		}
     }
@@ -255,34 +258,105 @@ public class DISelementBehaviour : MonoBehaviour
         offsetToParentElement = transform.position - parentElement.transform.position;
 	}
 
-    public void PartOfCompletedGroup()
+    public IEnumerator PartOfCompletedGroup()
 	{
-        Debug.Log("Completed a group");
-	}
+        //Disable collider
+        GetComponent<Collider2D>().enabled = false;
+        //Remove from all lists
+        manager.elementsInConstructionArea.Remove(this.gameObject);
+        manager.elementsInPlay.Remove(this.gameObject);
+        manager.elementsInPlayBot.Remove(this.gameObject);
+        manager.elementsInPlayTop.Remove(this.gameObject);
 
-    public IEnumerator AnimateBack()
+        //calc own score
+        int ownColorElements = -1;
+        int otherColorElements = 0;
+		for (int i = 0; i < connectedElements.Count; i++)
+		{
+            if(connectedElements[i].colorType == colorType) { ownColorElements++; }
+			else { otherColorElements++; }
+		}
+        float ownScoreFloat = settings.defaultElementScore * (settings.sameColorMultiplier * (float)ownColorElements + settings.differentColorMultiplier * (float)otherColorElements);
+        int ownScore = Mathf.RoundToInt(ownScoreFloat);
+        //Spawn vfx object
+        GameObject vfxGO = Instantiate(settings.burstToScoreParticles);
+        DISelementParticleBehaviour vfxController = vfxGO.GetComponent<DISelementParticleBehaviour>();
+        //set vfx
+        vfxController.spawnAmount = ownScore;
+        vfxController.parentElement = this;
+        vfxController.target = colorType == Colour.purple ? manager.bottomScoreDisplay : manager.topScoreDisplay;
+        vfxController.color = colorType == Colour.purple ? settings.botVFXColor : settings.topVFXColor;
+        vfxController.InitVFX();
+
+        //disable spriterenderer
+        GetComponent<SpriteRenderer>().enabled = false;
+
+        //burst vfx
+        vfxController.FireVFX();
+
+        //wait for vfx to hit
+        yield return new WaitForSeconds(settings.vfxReachTime);
+        
+        //add to score
+        if(colorType == Colour.purple) { manager.botScore += ownScore; }
+		else { manager.topScore += ownScore; }
+
+        //Destroy this object
+        Destroy(this.gameObject);
+    }
+
+    public IEnumerator AnimateToSnapPosition(DISelementBehaviour connectElement, Vector3 ReleasePosition, Vector3 SnapPosition)
 	{
-		//Animate back to original position
-        isAnimating = true;
         float TimeValue = 0;
-        Vector3 ReleasePosition = transform.position;
-        Vector3 AnchorPosition = spawnAnchor.position;
 
         while (TimeValue < 1)
         {
-            TimeValue += Time.deltaTime / settings.animateBackToAnchorDuration;
-            float EvaluatedTimeValue = settings.animateBackToAnchorCurve.Evaluate(TimeValue);
-            Vector3 NewPos = Vector3.Lerp(ReleasePosition, AnchorPosition, EvaluatedTimeValue);
+			for (int i = 0; i < connectedElements.Count; i++)
+			{
+				if (connectedElements[i].isDragged) { isAnimating = false; yield break; }
+			}
+			for (int i = 0; i < connectElement.connectedElements.Count; i++)
+			{
+                if (connectElement.connectedElements[i].isDragged) { isAnimating = false; yield break; }
+            }
+            TimeValue += Time.deltaTime / settings.snapToConnectedPositionDuration;
+            float EvaluatedTimeValue = settings.snapToConnectedPositionCurve.Evaluate(TimeValue);
+            Vector3 NewPos = Vector3.Lerp(ReleasePosition, SnapPosition, EvaluatedTimeValue);
+
             transform.position = NewPos;
 
             yield return null;
         }
 
         isAnimating = false;
+        hasSnapped = true;
+    }
+
+    public IEnumerator AnimateBack()
+	{
+        manager.elementsInConstructionArea.Remove(this.gameObject);
+        //Animate back to original position
+        isAnimating = true;
+        float TimeValue = 0;
+        Vector3 ReleasePosition = transform.position;
+
+        while (TimeValue < 1)
+        {
+            TimeValue += Time.deltaTime / settings.animateBackToAnchorDuration;
+            float EvaluatedTimeValue = settings.animateBackToAnchorCurve.Evaluate(TimeValue);
+            Vector3 NewPos = Vector3.Lerp(ReleasePosition, spawnAnchor.position, EvaluatedTimeValue);
+            transform.position = NewPos;
+
+            yield return null;
+        }
+       
+        isAnimating = false;
+        isInConstructionZone = false;
     }
 
     public IEnumerator AnimateFadeOut()
 	{
+        manager.elementsInConstructionArea.Remove(this.gameObject);
         //Fade out
         isAnimating = true;
         float TimeValue = 0;

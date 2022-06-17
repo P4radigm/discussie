@@ -52,8 +52,12 @@ public class DISgameplayInput : MonoBehaviour
                         _NewInteraction.hitOffsetVector = new Vector2(_ScreenTouchVector.x - _UnitPosition.x, _ScreenTouchVector.y - _UnitPosition.y);
 
                         interactingElements.Add(_NewInteraction);
-                        //Update isDragged status of Unit
-                        EB.isDragged = true;
+						//Update isDragged status of Unit
+						for (int e = 0; e < EB.connectedElements.Count; e++)
+						{
+                            EB.connectedElements[e].isDragged = true;
+                        }
+                        
                         if(EB.parentElement != EB)
 						{
 							for (int j = 0; j < EB.connectedElements.Count; j++)
@@ -99,13 +103,20 @@ public class DISgameplayInput : MonoBehaviour
 
                 if (_CurrentUnitPairing != 999)
                 {
-                    //Update isDragged status of Unit
-                    interactingElements[_CurrentUnitPairing].attachedElement.GetComponent<DISelementBehaviour>().isDragged = false;
-                    //Form Group
-                    interactingElements[_CurrentUnitPairing].attachedElement.GetComponent<DISelementBehaviour>().OnRelease();
-                    //Set velocity zero
-                    interactingElements[_CurrentUnitPairing].attachedElement.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
-                    //enable unit collider?
+                    DISelementBehaviour EB = interactingElements[_CurrentUnitPairing].attachedElement.GetComponent<DISelementBehaviour>();
+                    for (int e = 0; e < EB.connectedElements.Count; e++)
+                    {
+                        //Update isDragged status of Unit
+                        EB.connectedElements[e].isDragged = false;
+                        //Set velocity zero
+                        EB.gameObject.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+                    }
+
+                    for (int e = 0; e < EB.connectedElements.Count; e++)
+                    {
+                        //Form Group
+                        EB.connectedElements[e].OnRelease();
+                    }
 
                     //Update paired position w/ offset
                     interactingElements.RemoveAt(_CurrentUnitPairing);
