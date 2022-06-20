@@ -7,15 +7,18 @@ public class DISgameplayManager : MonoBehaviour
 {
 	private DISgameplaySettings settings;
 	private DISgameplayInput input;
+	private DISscoreResultManager resultManager;
 	[HideInInspector] public List<GameObject> elementsInPlayTop = new List<GameObject>();
 	[HideInInspector] public List<GameObject> elementsInPlayBot = new List<GameObject>();
 	[HideInInspector] public List<GameObject> elementsInPlay = new List<GameObject>();
+	[HideInInspector] public List<Transform> anchorsInPlay = new List<Transform>();
 	[HideInInspector] public List<GameObject> elementsInConstructionArea = new List<GameObject>();
 	public TextMeshProUGUI topScoreDisplay;
 	public TextMeshProUGUI bottomScoreDisplay;
 	[SerializeField] private RectTransform scoreHolder;
 	[SerializeField] private Transform topDashedLine;
 	[SerializeField] private Transform botDashedLine;
+	[SerializeField] private TextMeshProUGUI timerText;
 
 	[Header("Anim settings")]
 	[SerializeField] private float introTimeBeforeFirstSpawn;
@@ -29,6 +32,8 @@ public class DISgameplayManager : MonoBehaviour
 	[Space(10)]
 	[SerializeField] private float outroAnimDuration;
 	[SerializeField] private AnimationCurve outroAnimCurve;
+	private Coroutine animateOutRoutine;
+	
 
 	private SequenceManager sequenceManager;
 	private DataManager dataManager;
@@ -41,6 +46,9 @@ public class DISgameplayManager : MonoBehaviour
 	public int topScore = 0;
 	private float botDisplayScore = 0;
 	private float topDisplayScore = 0;
+	public string resultString = "";
+	public int difference;
+	public int totalScore;
 
 	public void StartUp()
 	{
@@ -50,6 +58,7 @@ public class DISgameplayManager : MonoBehaviour
 
 		settings = GetComponent<DISgameplaySettings>();
 		input = GetComponent<DISgameplayInput>();
+		resultManager = GetComponent<DISscoreResultManager>();
 
 		//Generate a set of solvable or random (weighted) elements
 		List<GameObject> elementPool = new List<GameObject>();
@@ -190,7 +199,8 @@ public class DISgameplayManager : MonoBehaviour
 		}
 
 		//Randomise list of elements
-		List<GameObject> shuffledElementPool = ShuffleList(elementPool); //Maybe it should be sorted for play section B!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		List<GameObject> shuffledElementPool = elementPool;
+		if (settings.shuffleElements) { shuffledElementPool = ShuffleList(elementPool); } //Maybe it should be sorted for play section B!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		Debug.Log($"shuffledElementPool Count = {shuffledElementPool.Count}");
 		int spawnedCounter = 0;
 		//Spawn bot elements
@@ -246,18 +256,21 @@ public class DISgameplayManager : MonoBehaviour
 		{
 			//Animate scroll based on settings
 			List<GameObject> ReplacementElements = new List<GameObject>();
-			for (int i = 0; i < elementsInPlay.Count; i++)
+			for (int i = 0; i < anchorsInPlay.Count; i++)
 			{
-				DISelementBehaviour EB = elementsInPlay[i].GetComponent<DISelementBehaviour>();
-				if (EB.spawnAnchor == null) { continue; } //Element does not ever need to scroll anymore
-				Transform Anchor = EB.spawnAnchor;
-
+				Transform Anchor = anchorsInPlay[i];
+				DISelementBehaviour EB = Anchor.GetComponent<DISanchor>().linkedElement;
 				//Might want to have a setting to control the speed per line just like the direction, but idk if necassary
 				Anchor.position += new Vector3((float)settings.scrollDirectionList[EB.line] * settings.scrollSpeed * Time.deltaTime, 0, 0);
-				if (!EB.isDragged && !EB.isAnimating && !EB.isInConstructionZone)
+
+				if(EB != null)
 				{
-					EB.transform.position = Anchor.position;
+					if (!EB.isDragged && !EB.isAnimating && !EB.isInConstructionZone)
+					{
+						EB.transform.position = Anchor.position;
+					}
 				}
+
 
 				//Detect whether element is out of range -> needs to be destroyed && Spawn in new element
 				if (Anchor.position.x < settings.xPositions[0] - settings.scrollRangeOffset || Anchor.position.x > settings.xPositions[settings.xPositions.Count - 1] + settings.scrollRangeOffset)
@@ -266,14 +279,18 @@ public class DISgameplayManager : MonoBehaviour
 
 					//Store Yposition and line for replacement Element
 					float xPosAtDestruction = Anchor.position.x;
-					int spawnLine = EB.line;
+					int spawnLine = Anchor.GetComponent<DISanchor>().line;
 
 					//Destroy Anchor
+					anchorsInPlay.RemoveAt(i);
 					Destroy(Anchor.gameObject);
 					//Queue attached element for destruction
-					if (!EB.isInConstructionZone && !EB.isDragged)
+					if (EB != null)
 					{
-						EB.queForDestruction = true;
+						if (!EB.isInConstructionZone && !EB.isDragged)
+						{
+							EB.queForDestruction = true;
+						}
 					}
 
 					float leftScrollerAdjustedXPos = settings.xPositions[settings.xPositions.Count - 1] - (settings.xPositions[0] - xPosAtDestruction);
@@ -317,6 +334,7 @@ public class DISgameplayManager : MonoBehaviour
 							int randomConnectionRight = Random.Range(0, settings.leftEdgeElements[0].gameObjects.Length);
 							elementPrefab = settings.connectorElements[maleFemaleDeciderLeft].gameObjects3D[maleFemaleDeciderRight].gameObjects2D[randomConnectionLeft].gameObjects[randomConnectionRight];
 						}
+					i--;
 					}
 					//Instantiate Replacement Object
 					int newColorIndex = spawnLine < settings.bottomLines ? 0 : 1;
@@ -369,7 +387,17 @@ public class DISgameplayManager : MonoBehaviour
 
 		if (settings.timerEnabled)
 		{
-			//Update timer
+			settings.totalTime -= Time.deltaTime;
+			if(settings.totalTime <= 0)
+			{
+				timerText.text = "0:00";
+				if (animateOutRoutine == null) { animateOutRoutine = StartCoroutine(AnimateOutNoScroll()); }
+				settings.scrollEnabled = false;
+			}
+			else 
+			{
+				timerText.text = $"{Mathf.FloorToInt(settings.totalTime / 60)}:{(Mathf.FloorToInt(settings.totalTime % 60) < 10 ? "0" : "")}{Mathf.FloorToInt(settings.totalTime % 60)}";
+			}
 		}
 
 		if(botDisplayScore < botScore)
@@ -384,24 +412,47 @@ public class DISgameplayManager : MonoBehaviour
 		topScoreDisplay.text = Mathf.RoundToInt(topDisplayScore).ToString();
 	}
 
+	public void EdgeCheck()
+	{
+		if (settings.scrollEnabled) { return; }
+		int edgeCounter = 0;
+		for (int i = 0; i < elementsInPlay.Count; i++)
+		{
+			DISelementBehaviour EB = elementsInPlay[i].GetComponent<DISelementBehaviour>();
+			if(EB.leftConnector == DISelementBehaviour.ConnnectionType.edge || EB.rightConnector == DISelementBehaviour.ConnnectionType.edge)
+			{
+				edgeCounter++;
+			}
+		}
+		if(edgeCounter <= 1)
+		{
+			//Trigger end anim
+			if(animateOutRoutine == null) { animateOutRoutine = StartCoroutine(AnimateOutNoScroll()); }
+		}
+	}
+
 	private GameObject SpawnElementAndAnchor(string Name, GameObject Element, Vector3 Location, Color color, int line, bool isTransparent)
 	{
 		GameObject GO = Instantiate(Element, Location, Quaternion.identity, this.transform);
 		GO.transform.localScale = Vector3.one * settings.elementScale;
 		DISelementBehaviour EB = GO.GetComponent<DISelementBehaviour>();
-		GO.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, isTransparent ? 0 : 1);
+		GO.GetComponent<SpriteRenderer>().color = new Color(color.r, color.g, color.b, isTransparent ? 0 : settings.elementTransperancy);
 		GameObject Anchor = new GameObject();
 		Anchor.transform.position = Location;
 		Anchor.transform.parent = this.transform;
+		DISanchor anchorComp = Anchor.AddComponent<DISanchor>();
+		anchorComp.linkedElement = EB;
 		EB.spawnAnchor = Anchor.transform;
 		EB.line = line;
+		anchorComp.line = line;
 		EB.manager = this;
 		EB.settings = settings;
 		EB.input = input;
 		EB.colorType = color == colorManager.highlightColorList[0] ? DISelementBehaviour.Colour.purple : DISelementBehaviour.Colour.green;
-		EB.col = color;
+		EB.col = new Color(color.r, color.g, color.b, settings.elementTransperancy);
 		GO.name = $"{Name}.Element";
 		Anchor.name = $"{Name}.Anchor";
+		anchorsInPlay.Add(Anchor.transform);
 		return GO;
 	}
 
@@ -457,29 +508,84 @@ public class DISgameplayManager : MonoBehaviour
 
 			bottomScoreDisplay.color = new Color(bottomScoreDisplay.color.r, bottomScoreDisplay.color.g, bottomScoreDisplay.color.b, NewAlpha);
 			topScoreDisplay.color = new Color(topScoreDisplay.color.r, topScoreDisplay.color.g, topScoreDisplay.color.b, NewAlpha);
+			if (settings.timerEnabled) { timerText.color = new Color(timerText.color.r, timerText.color.g, timerText.color.b, NewAlpha); }
 
 			yield return null;
 		}
 	}
-
-	public void AddToScore(float scoreAddition)
+	private IEnumerator AnimateOutNoScroll()
 	{
-		//Animate score element
-	}
 
-	public void CloseDown()
-	{
-		//Animate out elements
-	}
+		//Buffer for vfx finish
+		if (settings.scrollEnabled)
+		{
+			yield return new WaitForSeconds(settings.vfxReachTime - 0.5f);
+			CalculateEndScores();
+			CommunicateResult();
+		}
+		else
+		{
+			yield return new WaitForSeconds(settings.vfxReachTime + 0.5f);
+			CalculateEndScores();
+		}
 
-	private IEnumerator AnimateOut()
-	{
+		input.enabled = false;
+		//Starts animating the last elements out
+		for (int i = 0; i < elementsInPlay.Count; i++)
+		{
+			DISelementBehaviour EB = elementsInPlay[i].GetComponent<DISelementBehaviour>();
+			EB.isDragged = false;
+			elementsInPlay[i].GetComponent<DISelementBehaviour>().StartCoroutine(elementsInPlay[i].GetComponent<DISelementBehaviour>().AnimateFadeOut());
+		}
+		//Dashed lines
+		SpriteRenderer[] topDashedRenderer = topDashedLine.gameObject.GetComponentsInChildren<SpriteRenderer>();
+		SpriteRenderer[] botDashedRenderer = botDashedLine.gameObject.GetComponentsInChildren<SpriteRenderer>();
+		//Score displays
+
+		//Background(s)?
+
+		float TimeValue = 0;
+
+		while (TimeValue < 1)
+		{
+			TimeValue += Time.deltaTime / outroAnimDuration;
+			float EvaluatedTimeValue = outroAnimCurve.Evaluate(TimeValue);
+			float NewAlpha = Mathf.Lerp(1, 0, EvaluatedTimeValue);
+
+			for (int i = 0; i < topDashedRenderer.Length; i++)
+			{
+				topDashedRenderer[i].color = new Color(topDashedRenderer[i].color.r, topDashedRenderer[i].color.g, topDashedRenderer[i].color.b, NewAlpha);
+			}
+			for (int i = 0; i < botDashedRenderer.Length; i++)
+			{
+				botDashedRenderer[i].color = new Color(botDashedRenderer[i].color.r, botDashedRenderer[i].color.g, botDashedRenderer[i].color.b, NewAlpha);
+			}
+
+			bottomScoreDisplay.color = new Color(bottomScoreDisplay.color.r, bottomScoreDisplay.color.g, bottomScoreDisplay.color.b, NewAlpha);
+			topScoreDisplay.color = new Color(topScoreDisplay.color.r, topScoreDisplay.color.g, topScoreDisplay.color.b, NewAlpha);
+			if (settings.timerEnabled) { timerText.color = new Color(timerText.color.r, timerText.color.g, timerText.color.b, NewAlpha); }
+
+			yield return null;
+		}
+
+		//Start Result Manager sequence
+		resultManager.SetText(botScore, topScore, difference, totalScore);
+		resultManager.StartCoroutine(resultManager.ResultSequence());
 		yield return null;
+	}
+
+	public void CalculateEndScores()
+	{
+		//Calculate all end results
+		difference = Mathf.Abs(topScore - botScore);
+		totalScore = botScore + topScore - difference;
 	}
 
 	public void CommunicateResult()
 	{
 		//Communicate result to data manager
+		dataManager.currentSaveData.gameResult = $"s{totalScore}s{resultString}";
+		dataManager.UpdateSaveFile();
 	}
 
 	private List<GameObject> ShuffleList(List<GameObject> list)

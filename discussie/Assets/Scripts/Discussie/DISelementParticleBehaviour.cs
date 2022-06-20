@@ -11,9 +11,11 @@ public class DISelementParticleBehaviour : MonoBehaviour
 	[HideInInspector] public int spawnAmount;
 	[HideInInspector] public DISelementBehaviour parentElement;
 	[HideInInspector] public TextMeshProUGUI target;
+	[HideInInspector] public int topBot;
 	[HideInInspector] [ColorUsage(true, true)] public Color color;
 
-
+	[SerializeField] private Vector2 initialRandomYVelocityMinMax;
+	[SerializeField] private float distanceScaleValue;
 	[SerializeField] private Vector3 spawnAreaSize;
 	[SerializeField] private AnimationCurve sizeOverLifetime;
 	[SerializeField] private float targetSphereRadius;
@@ -38,10 +40,11 @@ public class DISelementParticleBehaviour : MonoBehaviour
 		vfx.SetVector3("TargetSpherePosition", transform.InverseTransformPoint(targetWorldPoint));
 		vfx.SetFloat("TargetSphereRadius", targetSphereRadius);
 		float DistanceLocal = Vector3.Distance(transform.position, transform.InverseTransformPoint(targetWorldPoint));
-		vfx.SetFloat("Attraction Speed", attractionSpeedAtDistance1Local * DistanceLocal);
-		vfx.SetFloat("Attraction Force", attractionForceAtDistance1Local * DistanceLocal);
-		vfx.SetFloat("Stick Distance", stickDistanceAtDistance1Local * DistanceLocal);
-		vfx.SetFloat("Stick Force", stickForceAtDistance1Local * DistanceLocal);
+		vfx.SetFloat("Attraction Speed", attractionSpeedAtDistance1Local + ((DistanceLocal - 1f) * distanceScaleValue) * attractionSpeedAtDistance1Local);
+		vfx.SetFloat("Attraction Force", attractionForceAtDistance1Local + ((DistanceLocal - 1f) * distanceScaleValue) * attractionForceAtDistance1Local);
+		vfx.SetFloat("Stick Distance", stickDistanceAtDistance1Local + ((DistanceLocal - 1f) * distanceScaleValue) * stickDistanceAtDistance1Local);
+		vfx.SetFloat("Stick Force", stickForceAtDistance1Local + ((DistanceLocal - 1f) * distanceScaleValue) * stickForceAtDistance1Local);
+		vfx.SetVector2("AddRandomYVelocity", initialRandomYVelocityMinMax * (float)topBot);
 	}
 
 	public void FireVFX()

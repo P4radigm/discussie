@@ -41,11 +41,14 @@ public class DISgameplaySettings : MonoBehaviour
 	[Range(0, 100)] public float edgePiecesPercentage;
 	public bool containsMiddlePieces;
 	[Range(0, 100)] public float groupsWithMiddlePiecesPercentage;
+	public bool shuffleElements;
 	[HideInInspector] public List<float> xPositions = new List<float>(); 
 	[HideInInspector] public List<float> yPosBottomLines = new List<float>(); 
 	[HideInInspector] public List<float> yPosTopLines = new List<float>(); 
 	public float yTopEdgeConstruction;
+	public float yTopLine;
 	public float yPosConstruction;
+	public float yBotLine;
 	public float yBotEdgeConstruction;
 	
 
@@ -83,7 +86,8 @@ public class DISgameplaySettings : MonoBehaviour
 	public AnimationCurve fadeOutCurve;
 
 	[Header("Element Sizes")]
-	[SerializeField] private float elementWidthAtScale1;
+	public float elementTransperancy;
+	public float elementWidthAtScale1;
 	[HideInInspector] public float elementWidth;
 	[SerializeField] private float elementHeightAtScale1;
 	[HideInInspector] public float elementHeight;
@@ -218,11 +222,15 @@ public class DISgameplaySettings : MonoBehaviour
 			}
 			yPosForCalc += adjustedVerticalSpaceBetweenElements;
 			yBotEdgeConstruction = yPosForCalc;
-			yPosForCalc += adjustedVerticalConstructionSpacePadding;
+			yPosForCalc += adjustedVerticalConstructionSpacePadding / 2f;
+			yBotLine = yPosForCalc;
+			yPosForCalc += adjustedVerticalConstructionSpacePadding / 2f;
 			yPosForCalc += elementHeight / 2f;
 			yPosConstruction = yPosForCalc;
 			yPosForCalc += elementHeight / 2f;
-			yPosForCalc += adjustedVerticalConstructionSpacePadding;
+			yPosForCalc += adjustedVerticalConstructionSpacePadding / 2f;
+			yTopLine = yPosForCalc;
+			yPosForCalc += adjustedVerticalConstructionSpacePadding / 2f;
 			yTopEdgeConstruction = yPosForCalc;
 			yPosForCalc += adjustedVerticalSpaceBetweenElements;
 			for (int i = 0; i < topLines; i++)
@@ -263,11 +271,15 @@ public class DISgameplaySettings : MonoBehaviour
 				}
 				yPosForCalc += comfyVerticalDistanceBetweeenElements;
 				yBotEdgeConstruction = yPosForCalc;
-				yPosForCalc += comfyVerticalConstructionSpacePadding;
+				yPosForCalc += comfyVerticalConstructionSpacePadding / 2f;
+				yBotLine = yPosForCalc;
+				yPosForCalc += comfyVerticalConstructionSpacePadding / 2f;
 				yPosForCalc += elementHeight / 2f;
 				yPosConstruction = yPosForCalc;
 				yPosForCalc += elementHeight / 2f;
-				yPosForCalc += comfyVerticalConstructionSpacePadding;
+				yPosForCalc += comfyVerticalConstructionSpacePadding / 2f;
+				yTopLine = yPosForCalc;
+				yPosForCalc += comfyVerticalConstructionSpacePadding / 2f;
 				yTopEdgeConstruction = yPosForCalc;
 				return;
 			}
@@ -286,11 +298,15 @@ public class DISgameplaySettings : MonoBehaviour
 			}
 			yPosForCalcMin += minVerticalDistanceBetweeenElements;
 			yBotEdgeConstruction = yPosForCalcMin;
-			yPosForCalcMin += minVerticalConstructionSpacePadding;
+			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
+			yBotLine = yPosForCalcMin;
+			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
 			yPosForCalcMin += elementHeight / 2f;
 			yPosConstruction = yPosForCalcMin;
 			yPosForCalcMin += elementHeight / 2f;
-			yPosForCalcMin += minVerticalConstructionSpacePadding;
+			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
+			yBotLine = yPosForCalcMin;
+			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
 			yTopEdgeConstruction = yPosForCalcMin;
 
 			//List bot to top Botlines (toplines don't exist)
@@ -323,11 +339,15 @@ public class DISgameplaySettings : MonoBehaviour
 				}
 				yPosForCalc -= comfyVerticalDistanceBetweeenElements;
 				yTopEdgeConstruction = yPosForCalc;
-				yPosForCalc -= comfyVerticalConstructionSpacePadding;
+				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
+				yBotLine = yPosForCalc;
+				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
 				yPosForCalc -= elementHeight / 2f;
 				yPosConstruction = yPosForCalc;
 				yPosForCalc -= elementHeight / 2f;
-				yPosForCalc -= comfyVerticalConstructionSpacePadding;
+				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
+				yBotLine = yPosForCalc;
+				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
 				yBotEdgeConstruction = yPosForCalc;
 				return;
 			}
@@ -346,11 +366,15 @@ public class DISgameplaySettings : MonoBehaviour
 			}
 			yPosForCalcMin -= minVerticalDistanceBetweeenElements;
 			yTopEdgeConstruction = yPosForCalcMin;
-			yPosForCalcMin -= minVerticalConstructionSpacePadding;
+			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
+			yBotLine = yPosForCalcMin;
+			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
 			yPosForCalcMin -= elementHeight / 2f;
 			yPosConstruction = yPosForCalcMin;
 			yPosForCalcMin -= elementHeight / 2f;
-			yPosForCalcMin -= minVerticalConstructionSpacePadding;
+			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
+			yBotLine = yPosForCalcMin;
+			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
 			yBotEdgeConstruction = yPosForCalcMin;
 		}
 

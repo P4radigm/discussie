@@ -25,12 +25,16 @@ public class RatingBehaviour : MonoBehaviour
     [SerializeField] private Button continueButton;
     [SerializeField] private BaseDefinition baseDefinition;
     [SerializeField] private BaseInputDefinition baseInputDefinition;
+    private Canvas parentCanvas;
+    private float parentCanvasScaleFactor;
 
     private Vector2 raycastTargetScreenPos;
 	private void Start()
 	{
+        parentCanvas = GetComponentInParent<Canvas>();
+        parentCanvasScaleFactor = parentCanvas.scaleFactor;
         raycastTargetScreenPos = Camera.main.WorldToScreenPoint(raycastTarget.position);
-        Debug.Log(raycastTargetScreenPos);
+        //Debug.Log($"raycastTargetScreenPos = {raycastTargetScreenPos}");
         innerMarkers.SetActive(false);
         outerMarkers.SetActive(false);
     }
@@ -72,7 +76,7 @@ public class RatingBehaviour : MonoBehaviour
 	{
         //Debug.Log(relativePos);
         //Vector2 _newTargetPos = Vector2.zero;
-        Vector2 _newTargetPos = new Vector2(Mathf.Clamp(relativePos.x, -200, 200), Mathf.Clamp(relativePos.y, -200, 200));
+        Vector2 _newTargetPos = new Vector2(Mathf.Clamp(relativePos.x / parentCanvasScaleFactor, -200, 200), Mathf.Clamp(relativePos.y / parentCanvasScaleFactor, -200, 200));
 
         if(baseDefinition != null) { baseDefinition.rating = _newTargetPos / 200; }
         if(baseInputDefinition != null) { baseInputDefinition.ownRating = _newTargetPos / 200; }

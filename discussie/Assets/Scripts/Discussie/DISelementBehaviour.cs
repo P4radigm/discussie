@@ -111,7 +111,7 @@ public class DISelementBehaviour : MonoBehaviour
         float rangeToPossibleElement = Mathf.Infinity;
         bool directionBool = false;
         //Search for components that could connect within connection range
-        Debug.Log($"{gameObject.name} is searching for a connection");
+        //Debug.Log($"{gameObject.name} is searching for a connection");
         for (int i = 0; i < manager.elementsInConstructionArea.Count; i++)
 		{
             //Debug.Log($"{gameObject.name} is tryig a connection with {manager.elementsInConstructionArea[i].gameObject.name}");
@@ -119,13 +119,16 @@ public class DISelementBehaviour : MonoBehaviour
 
 			if (connectedElements.Contains(OtherEB))
 			{
-                if (OtherEB != this) { Debug.Log($"{gameObject.name} already shares a connection with {manager.elementsInConstructionArea[i].gameObject.name}"); };
+                if (OtherEB != this) 
+                { 
+                    //Debug.Log($"{gameObject.name} already shares a connection with {manager.elementsInConstructionArea[i].gameObject.name}");
+                };
                 continue; //Either self or already connected element
 			}
             
             if (Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position) > settings.tryConnectionRange)
 			{
-                Debug.Log($"{gameObject.name} is too far away from {manager.elementsInConstructionArea[i].gameObject.name}, {Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position)} > {settings.tryConnectionRange}");
+                //Debug.Log($"{gameObject.name} is too far away from {manager.elementsInConstructionArea[i].gameObject.name}, {Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position)} > {settings.tryConnectionRange}");
                 continue; //The element is too far away
 			}
 
@@ -134,26 +137,26 @@ public class DISelementBehaviour : MonoBehaviour
             float dotUp = Vector3.Dot((OtherEB.ownConnectionPivot.position - ownConnectionPivot.position).normalized, Vector3.up);
             if (dotUp < settings.minDotUpRange || dotUp > settings.maxDotUpRange)
             {
-                Debug.Log($"{gameObject.name} angled positions is too far off {manager.elementsInConstructionArea[i].gameObject.name}, {dotUp} < {settings.minDotUpRange} || {dotUp} > {settings.maxDotUpRange}");
+                //Debug.Log($"{gameObject.name} angled positions is too far off {manager.elementsInConstructionArea[i].gameObject.name}, {dotUp} < {settings.minDotUpRange} || {dotUp} > {settings.maxDotUpRange}");
                 continue; //Angle to the piece is too far off
             }
 
             if ((isLeft ? leftConnector : rightConnector) != (isLeft ? OtherEB.rightConnector : OtherEB.leftConnector) || (isLeft ? leftMF : rightMF) == (isLeft ? OtherEB.rightMF : OtherEB.leftMF))
             {
-                Debug.Log($"{gameObject.name}'s connector is not compatible with {manager.elementsInConstructionArea[i].gameObject.name}, this connector = {(isLeft ? leftMF : rightMF)}.{(isLeft ? leftConnector : rightConnector)}, other connector = {(isLeft ? OtherEB.rightMF : OtherEB.leftMF)}.{(isLeft ? OtherEB.rightConnector : OtherEB.leftConnector)}");
+                //Debug.Log($"{gameObject.name}'s connector is not compatible with {manager.elementsInConstructionArea[i].gameObject.name}, this connector = {(isLeft ? leftMF : rightMF)}.{(isLeft ? leftConnector : rightConnector)}, other connector = {(isLeft ? OtherEB.rightMF : OtherEB.leftMF)}.{(isLeft ? OtherEB.rightConnector : OtherEB.leftConnector)}");
                 continue; //Another unconnected element is closer, so connecting to that one instead
             }
 
 			//Check if already connected to another connector on this connection
             if((isLeft ? leftHasConnection : rightHasConnection))
 			{
-                Debug.Log($"{gameObject.name} is trying to connect to a connector that has another connection already {manager.elementsInConstructionArea[i].gameObject.name}");
+                //Debug.Log($"{gameObject.name} is trying to connect to a connector that has another connection already {manager.elementsInConstructionArea[i].gameObject.name}");
                 continue; //The connection is already populated
             }
 
             if (Vector3.Distance(OtherEB.ownConnectionPivot.position, ownConnectionPivot.position) >= rangeToPossibleElement)
             {
-                Debug.Log($"{gameObject.name} already has found an element that is closer that {manager.elementsInConstructionArea[i].gameObject.name}, {elementToConnectTo.gameObject.name} is closest");
+                //Debug.Log($"{gameObject.name} already has found an element that is closer that {manager.elementsInConstructionArea[i].gameObject.name}, {elementToConnectTo.gameObject.name} is closest");
                 continue; //Another unconnected element is closer, so connecting to that one instead
             }
 
@@ -170,6 +173,7 @@ public class DISelementBehaviour : MonoBehaviour
             //Animate to position
             //Form connection
             //Check for completion
+            Debug.Log($"{gameObject.name} is starting FormConnection coroutine");
             StartCoroutine(FormConnection(elementToConnectTo, directionBool));
 		}
     }
@@ -202,9 +206,10 @@ public class DISelementBehaviour : MonoBehaviour
         }
 
         yield return new WaitForSeconds(settings.snapToConnectedPositionDuration);
+        yield return null;
 		for (int i = 0; i < connectedElements.Count; i++)
 		{
-            if (connectedElements[i].hasSnapped != true) { yield break; };
+            if (connectedElements[i].hasSnapped != true) { Debug.Log($"{connectedElements[i].gameObject.name} has not snapped"); yield break; };
             connectedElements[i].hasSnapped = false;
         }
 
@@ -271,35 +276,91 @@ public class DISelementBehaviour : MonoBehaviour
         //calc own score
         int ownColorElements = -1;
         int otherColorElements = 0;
-		for (int i = 0; i < connectedElements.Count; i++)
+
+        List<DISelementBehaviour> SortedList = new();
+        SortedList.Add(connectedElements[0]);
+		for (int i = 1; i < connectedElements.Count; i++)
 		{
-            if(connectedElements[i].colorType == colorType) { ownColorElements++; }
+            float xpos = connectedElements[i].transform.position.x;
+            if(xpos < SortedList[0].transform.position.x)
+			{
+                SortedList.Insert(0, connectedElements[i]);
+                continue;
+			}
+            else if(xpos > SortedList[SortedList.Count - 1].transform.position.x)
+			{
+                SortedList.Add(connectedElements[i]);
+                continue;
+            }
+			for (int j = 0; j < SortedList.Count; j++)
+			{
+                float curIndexXpos = SortedList[j].transform.position.x;
+                float nextIndexXpos = SortedList[Mathf.Clamp(j + 1, 0, SortedList.Count - 1)].transform.position.x;
+                if(xpos > curIndexXpos && xpos < nextIndexXpos)
+				{
+                    SortedList.Insert(j + 1, connectedElements[i]);
+                    continue;
+                }
+			}
+		}
+
+		for (int i = 0; i < SortedList.Count; i++)
+		{
+            if(SortedList[i].colorType == colorType) { ownColorElements++; }
 			else { otherColorElements++; }
 		}
-        float ownScoreFloat = settings.defaultElementScore * (settings.sameColorMultiplier * (float)ownColorElements + settings.differentColorMultiplier * (float)otherColorElements);
+        float ownScoreFloat = settings.defaultElementScore + settings.defaultElementScore * (settings.sameColorMultiplier * (float)ownColorElements + settings.differentColorMultiplier * (float)otherColorElements);
+        float otherScoreFloat = settings.defaultElementScore * settings.differentColorMultiplier * (float)otherColorElements;
         int ownScore = Mathf.RoundToInt(ownScoreFloat);
+        int otherScore = Mathf.RoundToInt(otherScoreFloat);
         //Spawn vfx object
-        GameObject vfxGO = Instantiate(settings.burstToScoreParticles);
-        DISelementParticleBehaviour vfxController = vfxGO.GetComponent<DISelementParticleBehaviour>();
+        GameObject vfxGOown = Instantiate(settings.burstToScoreParticles);
+        DISelementParticleBehaviour vfxControllerown = vfxGOown.GetComponent<DISelementParticleBehaviour>();
         //set vfx
-        vfxController.spawnAmount = ownScore;
-        vfxController.parentElement = this;
-        vfxController.target = colorType == Colour.purple ? manager.bottomScoreDisplay : manager.topScoreDisplay;
-        vfxController.color = colorType == Colour.purple ? settings.botVFXColor : settings.topVFXColor;
-        vfxController.InitVFX();
+        vfxControllerown.spawnAmount = Mathf.RoundToInt((float)ownScore * 1.5f);
+        vfxControllerown.parentElement = this;
+        vfxControllerown.target = colorType == Colour.purple ? manager.bottomScoreDisplay : manager.topScoreDisplay;
+        vfxControllerown.color = colorType == Colour.purple ? settings.botVFXColor : settings.topVFXColor;
+        vfxControllerown.topBot = colorType == Colour.purple ? -1 : 1;
+        vfxControllerown.InitVFX();
+
+        //Spawn vfx object
+        GameObject vfxGOother = Instantiate(settings.burstToScoreParticles);
+        DISelementParticleBehaviour vfxControllerother = vfxGOother.GetComponent<DISelementParticleBehaviour>();
+        //set vfx
+        vfxControllerother.spawnAmount = Mathf.RoundToInt((float)otherScore * 1.5f);
+        vfxControllerother.parentElement = this;
+        vfxControllerother.target = colorType == Colour.purple ? manager.topScoreDisplay : manager.bottomScoreDisplay;
+        vfxControllerother.color = colorType == Colour.purple ? settings.topVFXColor : settings.botVFXColor;
+        vfxControllerother.topBot = colorType == Colour.purple ? 1 : -1;
+        vfxControllerother.InitVFX();
 
         //disable spriterenderer
         GetComponent<SpriteRenderer>().enabled = false;
 
         //burst vfx
-        vfxController.FireVFX();
+        vfxControllerown.FireVFX();
+        vfxControllerother.FireVFX();
 
         //wait for vfx to hit
         yield return new WaitForSeconds(settings.vfxReachTime);
         
         //add to score
-        if(colorType == Colour.purple) { manager.botScore += ownScore; }
-		else { manager.topScore += ownScore; }
+        if(colorType == Colour.purple) { manager.botScore += ownScore; manager.topScore += otherScore; }
+		else { manager.topScore += ownScore; manager.botScore += otherScore; }
+
+		//Add to string
+		if (SortedList[0].parentElement == this)
+		{
+            manager.resultString += '-';
+            for (int i = 0; i < SortedList.Count; i++)
+			{
+                manager.resultString += SortedList[i].colorType == Colour.purple ? 'b' : 't';
+            }
+
+            //Check if any pairs are still possible
+            if (!settings.scrollEnabled) { manager.EdgeCheck(); }
+		}
 
         //Destroy this object
         Destroy(this.gameObject);
@@ -313,11 +374,11 @@ public class DISelementBehaviour : MonoBehaviour
         {
 			for (int i = 0; i < connectedElements.Count; i++)
 			{
-				if (connectedElements[i].isDragged) { isAnimating = false; yield break; }
+				if (connectedElements[i].isDragged) { isAnimating = false; Debug.Log($"{connectedElements[i].gameObject.name} is being dragged"); yield break; }
 			}
 			for (int i = 0; i < connectElement.connectedElements.Count; i++)
 			{
-                if (connectElement.connectedElements[i].isDragged) { isAnimating = false; yield break; }
+                if (connectElement.connectedElements[i].isDragged) { isAnimating = false; Debug.Log($"{connectElement.connectedElements[i].gameObject.name} is being dragged"); yield break; }
             }
             TimeValue += Time.deltaTime / settings.snapToConnectedPositionDuration;
             float EvaluatedTimeValue = settings.snapToConnectedPositionCurve.Evaluate(TimeValue);

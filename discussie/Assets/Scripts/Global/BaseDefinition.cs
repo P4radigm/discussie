@@ -8,8 +8,8 @@ using UnityEngine.UI;
 public class BaseDefinition : MonoBehaviour
 {
 	private bool active = false;
-	private TextMeshProUGUI[] texts;
-	private Image[] images;
+	private List<TextMeshProUGUI> texts = new();
+	private List<Image> images = new();
 
 	[SerializeField] private UnityEvent onActivated;
 	[SerializeField] private UnityEvent onAnimatedIn;
@@ -31,6 +31,10 @@ public class BaseDefinition : MonoBehaviour
 	public AnimationCurve animateOutCurve;
 	private Coroutine animateOutRoutine;
 	[SerializeField] private float continueSeconds;
+	[NonReorderable]
+	[SerializeField] private List<TextMeshProUGUI> filteredOutTexts;
+	[NonReorderable]
+	[SerializeField] private List<Image> filteredOutImages;
 
 	private SequenceManager sM;
 
@@ -41,29 +45,25 @@ public class BaseDefinition : MonoBehaviour
 
 		sM = SequenceManager.instance;
 
-		texts = GetComponentsInChildren<TextMeshProUGUI>(true);
+		TextMeshProUGUI[] unfilteredTexts = GetComponentsInChildren<TextMeshProUGUI>(true);
 		Image[] unfilteredImages = GetComponentsInChildren<Image>(true);
 
-		images = new Image[unfilteredImages.Length - 2];
-		int compensation = 0;
+		for (int i = 0; i < unfilteredTexts.Length; i++)
+		{
+			if (!filteredOutTexts.Contains(unfilteredTexts[i])) { texts.Add(unfilteredTexts[i]); }
+		}
+
 		for (int i = 0; i < unfilteredImages.Length; i++)
 		{
-			if(unfilteredImages[i].gameObject.tag != "RatingTarget" && unfilteredImages[i].GetComponent<Button>() == null)
-			{
-				images[i - compensation] = unfilteredImages[i];
-			}
-			else
-			{
-				compensation++;
-			}
+			if (!filteredOutImages.Contains(unfilteredImages[i])) { images.Add(unfilteredImages[i]); }
 		}
-		
+
 		//Set all graphics invisible
-		for (int i = 0; i < texts.Length; i++)
+		for (int i = 0; i < texts.Count; i++)
 		{
 			texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, 0);
 		}
-		for (int i = 0; i < images.Length; i++)
+		for (int i = 0; i < images.Count; i++)
 		{
 			images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, 0);
 		}
@@ -133,13 +133,13 @@ public class BaseDefinition : MonoBehaviour
 	{
 		onActivated.Invoke();
 		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Length];
-		for (int i = 0; i < texts.Length; i++)
+		float[] _startTextOpacities = new float[texts.Count];
+		for (int i = 0; i < texts.Count; i++)
 		{
 			_startTextOpacities[i] = texts[i].color.a;
 		}
-		float[] _startImageOpacities = new float[images.Length];
-		for (int i = 0; i < images.Length; i++)
+		float[] _startImageOpacities = new float[images.Count];
+		for (int i = 0; i < images.Count; i++)
 		{
 			_startImageOpacities[i] = images[i].color.a;
 		}
@@ -149,12 +149,12 @@ public class BaseDefinition : MonoBehaviour
 			_timeValue += Time.deltaTime / animateInDuration;
 			float _evaluatedTimeValue = animateInCurve.Evaluate(_timeValue);
 
-			for (int i = 0; i < texts.Length; i++)
+			for (int i = 0; i < texts.Count; i++)
 			{
 				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 1, _evaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
-			for (int i = 0; i < images.Length; i++)
+			for (int i = 0; i < images.Count; i++)
 			{
 				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 1, _evaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
@@ -173,13 +173,13 @@ public class BaseDefinition : MonoBehaviour
 	{
 		onAnimateOut.Invoke();
 		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Length];
-		for (int i = 0; i < texts.Length; i++)
+		float[] _startTextOpacities = new float[texts.Count];
+		for (int i = 0; i < texts.Count; i++)
 		{
 			_startTextOpacities[i] = texts[i].color.a;
 		}
-		float[] _startImageOpacities = new float[images.Length];
-		for (int i = 0; i < images.Length; i++)
+		float[] _startImageOpacities = new float[images.Count];
+		for (int i = 0; i < images.Count; i++)
 		{
 			_startImageOpacities[i] = images[i].color.a;
 		}
@@ -189,12 +189,12 @@ public class BaseDefinition : MonoBehaviour
 			_timeValue += Time.deltaTime / animateOutDuration;
 			float _evaluatedTimeValue = animateOutCurve.Evaluate(_timeValue);
 
-			for (int i = 0; i < texts.Length; i++)
+			for (int i = 0; i < texts.Count; i++)
 			{
 				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 0, _evaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
-			for (int i = 0; i < images.Length; i++)
+			for (int i = 0; i < images.Count; i++)
 			{
 				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 0, _evaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);

@@ -61,6 +61,7 @@ public class BaseInputDefinition : MonoBehaviour
     private Coroutine nameOutRoutine;
     public float animateNameOutDuration;
     public AnimationCurve animateNameOutCurve;
+    private bool inTransition;
 
     [Header("Values")]
     private bool atDefinition = true;
@@ -101,17 +102,17 @@ public class BaseInputDefinition : MonoBehaviour
 
     void Update()
     {
-        if(ownDefinition != "" && ownRating != Vector2.one * -99 && atDefinition) 
+        if(ownDefinition != "" && ownRating != Vector2.one * -99 && atDefinition && !inTransition) 
         { 
             sendDefButton.gameObject.SetActive(true); 
             sendNameButton.gameObject.SetActive(false);
         }
-        else if (ownSource != "" && !atDefinition && !delivered)
+        else if (ownSource != "" && !atDefinition && !delivered && !inTransition)
 		{
             sendDefButton.gameObject.SetActive(false); 
             sendNameButton.gameObject.SetActive(true);
         }
-		else
+		else if(!inTransition)
 		{
             sendDefButton.gameObject.SetActive(false);
             sendNameButton.gameObject.SetActive(false);
@@ -120,6 +121,7 @@ public class BaseInputDefinition : MonoBehaviour
 
     private IEnumerator AnimateDefIn()
 	{
+        inTransition = true;
         onDefinitionActivated.Invoke();
         definitionInputField.gameObject.SetActive(true);
         definitionInputField.enabled = true;
@@ -159,6 +161,7 @@ public class BaseInputDefinition : MonoBehaviour
         definitionInputField.GetComponent<Image>().raycastTarget = true;
         definitionInputField.Select();
         onDefinitionAnimatedIn.Invoke();
+        inTransition = false;
         defInRoutine = null;
     }
 
@@ -172,6 +175,7 @@ public class BaseInputDefinition : MonoBehaviour
 
     private IEnumerator AnimateDefOut()
     {
+        inTransition = true;
         atDefinition = false;
         onDefinitionAnimateOut.Invoke();
         definitionInputField.enabled = false;
@@ -200,6 +204,7 @@ public class BaseInputDefinition : MonoBehaviour
 
         definitionInputField.gameObject.SetActive(false);
         StartNameIn();
+        inTransition = false;
         defOutRoutine = null;
     }
 
@@ -212,6 +217,7 @@ public class BaseInputDefinition : MonoBehaviour
 
     private IEnumerator AnimateNameIn()
     {
+        inTransition = true;
         onNameActivated.Invoke();
         nameInputField.gameObject.SetActive(true);
         nameInputField.enabled = true;
@@ -241,6 +247,7 @@ public class BaseInputDefinition : MonoBehaviour
         nameInputField.GetComponent<Image>().raycastTarget = true;
         nameInputField.Select();
         onNameAnimatedIn.Invoke();
+        inTransition = false;
         nameInRoutine = null;
     }
 
@@ -258,6 +265,7 @@ public class BaseInputDefinition : MonoBehaviour
 
     private IEnumerator AnimateNameOut()
     {
+        inTransition = true;
         onNameAnimateOut.Invoke();
         nameInputField.enabled = false;
         nameInputField.GetComponent<Image>().raycastTarget = false;
@@ -294,6 +302,7 @@ public class BaseInputDefinition : MonoBehaviour
 
         nameInputField.gameObject.SetActive(false);
         sequenceManager.AddToGameState();
+        inTransition = false;
         nameOutRoutine = null;
     }
 
@@ -317,7 +326,7 @@ public class BaseInputDefinition : MonoBehaviour
 
     public void OnNewNameInput(string _inputString)
     {
-        if (_inputString == "" || _inputString == null) { nameDisplay.text = definitionPlaceholder; ownSource = ""; nameInputField.caretColor = new Color(0, 0.4f, 0.8f, 0); return; }
+        if (_inputString == "" || _inputString == null) { nameDisplay.text = namePlaceholder; ownSource = ""; nameInputField.caretColor = new Color(0, 0.4f, 0.8f, 0); return; }
 
         nameInputField.caretColor = new Color(0, 0.4f, 0.8f, 1);
         ownSource = _inputString;

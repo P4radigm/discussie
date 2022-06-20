@@ -168,11 +168,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   game: 2
-  isPersonal: 0
-  definition: bespreking waarbij de deelnemers trachten door argumenteren de oplossing
-    van een probleem te vinden
-  source: Woordenboeken.nu
+  isPersonal: 1
+  definition: Een gesprek tussen pertijen van met verschillende meningen waarbij
+    ze elkaar hun eigen standpunt proberen aan te leren door middel van argumenten
+  source: Elly
   initialRating: {x: 0, y: 0}
-  location: Official
+  location: Andere Plek
   privacy: 1
-  gameResult: ABC
+  gameResult: Test
