@@ -7,9 +7,6 @@ using UnityEngine.EventSystems;
 public class RatingBehaviour : MonoBehaviour
 {
     [SerializeField] private RectTransform targetGraphic;
-    [SerializeField] private GameObject innerMarkers;
-    [SerializeField] private GameObject halfMarkers;
-    [SerializeField] private GameObject outerMarkers;
     [Space(30)]
     [SerializeField] private RectTransform dottedLineUp;
     [SerializeField] private RectTransform dottedLineRight;
@@ -35,13 +32,11 @@ public class RatingBehaviour : MonoBehaviour
         parentCanvasScaleFactor = parentCanvas.scaleFactor;
         raycastTargetScreenPos = Camera.main.WorldToScreenPoint(raycastTarget.position);
         //Debug.Log($"raycastTargetScreenPos = {raycastTargetScreenPos}");
-        innerMarkers.SetActive(false);
-        outerMarkers.SetActive(false);
     }
 
 	void Update()
     {
-        if(Input.touchCount == 0) { innerMarkers.SetActive(false); outerMarkers.SetActive(false); return; }
+        if(Input.touchCount == 0) { return; }
 
 		for (int i = 0; i < Input.touches.Length; i++)
 		{
@@ -56,17 +51,10 @@ public class RatingBehaviour : MonoBehaviour
                 //Debug.Log(result.gameObject);
                 if(result.gameObject.tag == "RatingTarget")
 				{
-                    if (baseDefinition != null) { continueButton.gameObject.SetActive(true); }
-                    innerMarkers.SetActive(true);
-                    outerMarkers.SetActive(true);
+                    if (baseDefinition != null) { continueButton.gameObject.SetActive(true); continueButton.GetComponent<HintBlink>().Activate(); GetComponent<HintBlink>().DeActivate(); }               
                     //Debug.Log($"touchPos = {Input.GetTouch(i).position}, targetPos = {raycastTargetScreenPos}, relativePos = {Input.GetTouch(i).position - raycastTargetScreenPos}");
                     UpdateTargetPosition(Input.GetTouch(i).position - raycastTargetScreenPos);
                     //Debug.LogWarning("Hit Rating Target!");
-                }
-				else
-				{
-                    innerMarkers.SetActive(false);
-                    outerMarkers.SetActive(false);
                 }
 			}
 		}

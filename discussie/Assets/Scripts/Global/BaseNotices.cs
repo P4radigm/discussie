@@ -22,11 +22,15 @@ public class BaseNotices : MonoBehaviour
 	[SerializeField] private GameObject privacyContainer;
 	[SerializeField] private Button privacyButton;
 	private TextMeshProUGUI[] privacyTexts;
+	private List<float> privacyTextsOpacities = new();
 	private Image[] privacyImages;
+	private List<float> privacyImagesOpacities = new();
 	[SerializeField] private GameObject internetContainer;
 	[SerializeField] private Button internetButton;
 	private TextMeshProUGUI[] internetTexts;
+	private List<float> internetTextsOpacities = new();
 	private Image[] internetImages;
+	private List<float> internetImagesOpacities = new();
 
 	private Coroutine animateInRoutine;
 	[SerializeField] private float animateInDuration;
@@ -76,30 +80,32 @@ public class BaseNotices : MonoBehaviour
 		internetImages = internetContainer.GetComponentsInChildren<Image>(true);
 
 
-		//Set all graphics invisible
+		//Store all opacities and set all graphics invisible
 		for (int i = 0; i < privacyTexts.Length; i++)
 		{
+			privacyTextsOpacities.Add(privacyTexts[i].color.a);
 			privacyTexts[i].color = new Color(privacyTexts[i].color.r, privacyTexts[i].color.g, privacyTexts[i].color.b, 0);
 		}
 		for (int i = 0; i < privacyImages.Length; i++)
 		{
+			privacyImagesOpacities.Add(privacyImages[i].color.a);
 			privacyImages[i].color = new Color(privacyImages[i].color.r, privacyImages[i].color.g, privacyImages[i].color.b, 0);
 		}
 		for (int i = 0; i < internetTexts.Length; i++)
 		{
+			internetTextsOpacities.Add(internetTexts[i].color.a);
 			internetTexts[i].color = new Color(internetTexts[i].color.r, internetTexts[i].color.g, internetTexts[i].color.b, 0);
 		}
 		for (int i = 0; i < internetImages.Length; i++)
 		{
+			internetImagesOpacities.Add(internetImages[i].color.a);
 			internetImages[i].color = new Color(internetImages[i].color.r, internetImages[i].color.g, internetImages[i].color.b, 0);
 		}
-
-		
 
 		//Animate privacy in
 		if (animateInRoutine == null)
 		{
-			animateInRoutine = StartCoroutine(AnimateIn(privacyTexts, privacyImages, privacyButton));
+			animateInRoutine = StartCoroutine(AnimateIn(privacyTexts, privacyImages, privacyTextsOpacities, privacyImagesOpacities, privacyButton));
 		}
 	}
 
@@ -158,7 +164,7 @@ public class BaseNotices : MonoBehaviour
 		return _outputString;
 	}
 
-	private IEnumerator AnimateIn(TextMeshProUGUI[] texts, Image[] images, Button button)
+	private IEnumerator AnimateIn(TextMeshProUGUI[] texts, Image[] images, List<float> textOpacities, List<float> imageOpacities, Button button)
 	{
 		if (texts == privacyTexts)
 		{
@@ -189,12 +195,12 @@ public class BaseNotices : MonoBehaviour
 
 			for (int i = 0; i < texts.Length; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 1, _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], textOpacities[i], _evaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
 			for (int i = 0; i < images.Length; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 1, _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], imageOpacities[i], _evaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
 
@@ -205,6 +211,7 @@ public class BaseNotices : MonoBehaviour
 		else { onInternetAnimatedIn.Invoke(); }
 		yield return new WaitForSeconds(continueSeconds);
 		button.gameObject.SetActive(true);
+		button.gameObject.GetComponent<HintBlink>().Activate();
 		animateInRoutine = null;
 	}
 
@@ -213,10 +220,12 @@ public class BaseNotices : MonoBehaviour
 		if (texts == privacyTexts)
 		{
 			onPrivacyAnimateOut.Invoke();
+			privacyButton.GetComponent<HintBlink>().DeActivate();
 		}
 		else
 		{
 			onInternetAnimateOut.Invoke();
+			internetButton.GetComponent<HintBlink>().DeActivate();
 		}
 		float _timeValue = 0;
 		float[] _startTextOpacities = new float[texts.Length];
@@ -262,7 +271,7 @@ public class BaseNotices : MonoBehaviour
 		else
 		{
 			privacyContainer.SetActive(false);
-			StartCoroutine(AnimateIn(internetTexts, internetImages, internetButton));
+			StartCoroutine(AnimateIn(internetTexts, internetImages, internetTextsOpacities, internetImagesOpacities, internetButton));
 			animateOutRoutine = null;
 		}
 	}

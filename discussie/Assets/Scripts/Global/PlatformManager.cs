@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 public class PlatformManager : MonoBehaviour
 {
     public static PlatformManager instance;
+    public bool android;
 
     [Header("Connectivity")]
     public bool hasInternetConnection;

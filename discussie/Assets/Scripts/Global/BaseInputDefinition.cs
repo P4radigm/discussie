@@ -37,12 +37,16 @@ public class BaseInputDefinition : MonoBehaviour
     
     [Space(30)]
     [SerializeField] private TextMeshProUGUI[] toBeAnimatedGlobalTexts;
+    [SerializeField] private List<float> toBeAnimatedGlobalTextsOpacities;
     [SerializeField] private Image[] toBeAnimatedGlobalImages;
+    [SerializeField] private List<float> toBeAnimatedGlobalImagesOpacities;
 
     [Header("Animate Def In")]
     private Coroutine defInRoutine;
     [SerializeField] private TextMeshProUGUI[] toBeAnimatedDefTexts;
+    [SerializeField] private List<float> toBeAnimatedDefTextsOpacities;
     [SerializeField] private Image[] toBeAnimatedDefImages;
+    [SerializeField] private List<float> toBeAnimatedDefImagesOpacities;
     [Space(10)]
     [SerializeField] private float animateDefInDuration;
     [SerializeField] private AnimationCurve animateDefInCurve;
@@ -52,7 +56,9 @@ public class BaseInputDefinition : MonoBehaviour
     [SerializeField] private AnimationCurve animateDefOutCurve;
     [Header("Animate Name In")]
     [SerializeField] private TextMeshProUGUI[] toBeAnimatedNameTexts;
+    [SerializeField] private List<float> toBeAnimatedNameTextsOpacities;
     [SerializeField] private Image[] toBeAnimatedNameImages;
+    [SerializeField] private List<float> toBeAnimatedNameImagesOpacities;
     [Space(10)]
     private Coroutine nameInRoutine;
     [SerializeField] private float animateNameInDuration;
@@ -95,6 +101,40 @@ public class BaseInputDefinition : MonoBehaviour
         nameInputField.enabled = false;
         nameInputField.GetComponent<Image>().raycastTarget = false;
 
+		//Get all original opacities set everything to transparant
+		for (int i = 0; i < toBeAnimatedGlobalTexts.Length; i++)
+		{
+            toBeAnimatedGlobalTextsOpacities.Add(toBeAnimatedGlobalTexts[i].color.a);
+            toBeAnimatedGlobalTexts[i].color = new Color(toBeAnimatedGlobalTexts[i].color.r, toBeAnimatedGlobalTexts[i].color.g, toBeAnimatedGlobalTexts[i].color.b, toBeAnimatedGlobalTexts[i].color.a);
+        }
+        for (int i = 0; i < toBeAnimatedGlobalImages.Length; i++)
+        {
+            toBeAnimatedGlobalImagesOpacities.Add(toBeAnimatedGlobalImages[i].color.a);
+            toBeAnimatedGlobalImages[i].color = new Color(toBeAnimatedGlobalImages[i].color.r, toBeAnimatedGlobalImages[i].color.g, toBeAnimatedGlobalImages[i].color.b, toBeAnimatedGlobalImages[i].color.a);
+        }
+
+        for (int i = 0; i < toBeAnimatedDefTexts.Length; i++)
+        {
+            toBeAnimatedDefTextsOpacities.Add(toBeAnimatedDefTexts[i].color.a);
+            toBeAnimatedDefTexts[i].color = new Color(toBeAnimatedDefTexts[i].color.r, toBeAnimatedDefTexts[i].color.g, toBeAnimatedDefTexts[i].color.b, toBeAnimatedDefTexts[i].color.a);
+        }
+        for (int i = 0; i < toBeAnimatedDefImages.Length; i++)
+        {
+            toBeAnimatedDefImagesOpacities.Add(toBeAnimatedDefImages[i].color.a);
+            toBeAnimatedDefImages[i].color = new Color(toBeAnimatedDefImages[i].color.r, toBeAnimatedDefImages[i].color.g, toBeAnimatedDefImages[i].color.b, toBeAnimatedDefImages[i].color.a);
+        }
+
+        for (int i = 0; i < toBeAnimatedNameTexts.Length; i++)
+        {
+            toBeAnimatedNameTextsOpacities.Add(toBeAnimatedNameTexts[i].color.a);
+            toBeAnimatedNameTexts[i].color = new Color(toBeAnimatedNameTexts[i].color.r, toBeAnimatedNameTexts[i].color.g, toBeAnimatedNameTexts[i].color.b, toBeAnimatedNameTexts[i].color.a);
+        }
+        for (int i = 0; i < toBeAnimatedNameImages.Length; i++)
+        {
+            toBeAnimatedNameImagesOpacities.Add(toBeAnimatedNameImages[i].color.a);
+            toBeAnimatedNameImages[i].color = new Color(toBeAnimatedNameImages[i].color.r, toBeAnimatedNameImages[i].color.g, toBeAnimatedNameImages[i].color.b, toBeAnimatedNameImages[i].color.a);
+        }
+
         //Animate In
         if (defInRoutine != null) { return; }
         StartCoroutine(AnimateDefIn());
@@ -136,22 +176,22 @@ public class BaseInputDefinition : MonoBehaviour
 
             for (int i = 0; i < toBeAnimatedGlobalTexts.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(0, 1, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(0, toBeAnimatedGlobalTextsOpacities[i], _evaluatedTimeValue);
                 toBeAnimatedGlobalTexts[i].color = new Color(toBeAnimatedGlobalTexts[i].color.r, toBeAnimatedGlobalTexts[i].color.g, toBeAnimatedGlobalTexts[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedDefTexts.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(0, 1, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(0, toBeAnimatedDefTextsOpacities[i], _evaluatedTimeValue);
                 toBeAnimatedDefTexts[i].color = new Color(toBeAnimatedDefTexts[i].color.r, toBeAnimatedDefTexts[i].color.g, toBeAnimatedDefTexts[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedGlobalImages.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(0, 1, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(0, toBeAnimatedGlobalImagesOpacities[i], _evaluatedTimeValue);
                 toBeAnimatedGlobalImages[i].color = new Color(toBeAnimatedGlobalImages[i].color.r, toBeAnimatedGlobalImages[i].color.g, toBeAnimatedGlobalImages[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedDefImages.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(0, 1, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(0, toBeAnimatedDefImagesOpacities[i], _evaluatedTimeValue);
                 toBeAnimatedDefImages[i].color = new Color(toBeAnimatedDefImages[i].color.r, toBeAnimatedDefImages[i].color.g, toBeAnimatedDefImages[i].color.b, _newOpacity);
             }
             yield return null;
@@ -190,13 +230,13 @@ public class BaseInputDefinition : MonoBehaviour
 
             for (int i = 0; i < toBeAnimatedDefTexts.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(1, 0, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(toBeAnimatedDefTextsOpacities[i], 0, _evaluatedTimeValue);
                 toBeAnimatedDefTexts[i].color = new Color(toBeAnimatedDefTexts[i].color.r, toBeAnimatedDefTexts[i].color.g, toBeAnimatedDefTexts[i].color.b, _newOpacity);
             }
 
             for (int i = 0; i < toBeAnimatedDefImages.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(1, 0, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(toBeAnimatedDefImagesOpacities[i], 0, _evaluatedTimeValue);
                 toBeAnimatedDefImages[i].color = new Color(toBeAnimatedDefImages[i].color.r, toBeAnimatedDefImages[i].color.g, toBeAnimatedDefImages[i].color.b, _newOpacity);
             }
             yield return null;
@@ -232,12 +272,12 @@ public class BaseInputDefinition : MonoBehaviour
 
             for (int i = 0; i < toBeAnimatedNameTexts.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(0, 1, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(0, toBeAnimatedNameTextsOpacities[i], _evaluatedTimeValue);
                 toBeAnimatedNameTexts[i].color = new Color(toBeAnimatedNameTexts[i].color.r, toBeAnimatedNameTexts[i].color.g, toBeAnimatedNameTexts[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedNameImages.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(0, 1, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(0, toBeAnimatedNameImagesOpacities[i], _evaluatedTimeValue);
                 toBeAnimatedNameImages[i].color = new Color(toBeAnimatedNameImages[i].color.r, toBeAnimatedNameImages[i].color.g, toBeAnimatedNameImages[i].color.b, _newOpacity);
             }
             yield return null;
@@ -274,27 +314,27 @@ public class BaseInputDefinition : MonoBehaviour
 
         while (_timeValue < 1)
         {
-            _timeValue += Time.deltaTime / animateDefInDuration;
-            float _evaluatedTimeValue = animateDefInCurve.Evaluate(_timeValue);
+            _timeValue += Time.deltaTime / animateNameOutDuration;
+            float _evaluatedTimeValue = animateNameOutCurve.Evaluate(_timeValue);
 
             for (int i = 0; i < toBeAnimatedGlobalTexts.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(1, 0, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(toBeAnimatedGlobalTextsOpacities[i], 0, _evaluatedTimeValue);
                 toBeAnimatedGlobalTexts[i].color = new Color(toBeAnimatedGlobalTexts[i].color.r, toBeAnimatedGlobalTexts[i].color.g, toBeAnimatedGlobalTexts[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedNameTexts.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(1, 0, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(toBeAnimatedNameTextsOpacities[i], 0, _evaluatedTimeValue);
                 toBeAnimatedNameTexts[i].color = new Color(toBeAnimatedNameTexts[i].color.r, toBeAnimatedNameTexts[i].color.g, toBeAnimatedNameTexts[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedGlobalImages.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(1, 0, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(toBeAnimatedGlobalImagesOpacities[i], 0, _evaluatedTimeValue);
                 toBeAnimatedGlobalImages[i].color = new Color(toBeAnimatedGlobalImages[i].color.r, toBeAnimatedGlobalImages[i].color.g, toBeAnimatedGlobalImages[i].color.b, _newOpacity);
             }
             for (int i = 0; i < toBeAnimatedNameImages.Length; i++)
             {
-                float _newOpacity = Mathf.Lerp(1, 0, _evaluatedTimeValue);
+                float _newOpacity = Mathf.Lerp(toBeAnimatedNameImagesOpacities[i], 0, _evaluatedTimeValue);
                 toBeAnimatedNameImages[i].color = new Color(toBeAnimatedNameImages[i].color.r, toBeAnimatedNameImages[i].color.g, toBeAnimatedNameImages[i].color.b, _newOpacity);
             }
             yield return null;

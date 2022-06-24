@@ -9,7 +9,9 @@ public class BaseDefinition : MonoBehaviour
 {
 	private bool active = false;
 	private List<TextMeshProUGUI> texts = new();
+	private List<float> textsOpacities = new();
 	private List<Image> images = new();
+	private List<float> imagesOpacities = new();
 
 	[SerializeField] private UnityEvent onActivated;
 	[SerializeField] private UnityEvent onAnimatedIn;
@@ -58,13 +60,15 @@ public class BaseDefinition : MonoBehaviour
 			if (!filteredOutImages.Contains(unfilteredImages[i])) { images.Add(unfilteredImages[i]); }
 		}
 
-		//Set all graphics invisible
+		//Store all transperancy values and set all graphics invisible
 		for (int i = 0; i < texts.Count; i++)
 		{
+			textsOpacities.Add(texts[i].color.a);
 			texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, 0);
 		}
 		for (int i = 0; i < images.Count; i++)
 		{
+			imagesOpacities.Add(images[i].color.a);
 			images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, 0);
 		}
 
@@ -151,12 +155,12 @@ public class BaseDefinition : MonoBehaviour
 
 			for (int i = 0; i < texts.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 1, _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], textsOpacities[i], _evaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
 			for (int i = 0; i < images.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 1, _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], imagesOpacities[i], _evaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
 

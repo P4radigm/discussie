@@ -22,6 +22,9 @@ public class SequenceManager : MonoBehaviour
 
     public enum GameStates
     {
+        splashes,
+        gameDef,
+        menu,
         notices,
         location,
         definitionA,
@@ -36,6 +39,9 @@ public class SequenceManager : MonoBehaviour
 
     //Variables
     [Header("To Set")]
+    [SerializeField] private BaseSplashes baseSplashes;
+    [SerializeField] private BaseGameDef baseGameDef;
+    [SerializeField] private BaseMenu baseMenu;
     [SerializeField] private BaseNotices baseNotices;
     [SerializeField] private BaseLocation baseLocation;
     [SerializeField] private BaseDefinition baseDefinitionA;
@@ -48,11 +54,16 @@ public class SequenceManager : MonoBehaviour
     [SerializeField] private BaseEnd baseEnd;
     [Header("To Get")]
     public GameStates currentGamestate;
+    private ContinuityManager cM;
 
 
     void Start()
     {
-        
+        if (ContinuityManager.instance != null) 
+        {
+            cM = ContinuityManager.instance;
+            if (cM.hasBeenToMenu) { currentGamestate = GameStates.menu; }
+        }		
     }
 
     void Update()
@@ -65,11 +76,40 @@ public class SequenceManager : MonoBehaviour
 
         switch (currentGamestate)
         {
+            case GameStates.splashes:
+                if (baseSplashes.gameObject.activeInHierarchy == false)
+                {
+                    baseSplashes.gameObject.SetActive(true);
+                    baseSplashes.StartUp();
+                }
+                break;
+            case GameStates.gameDef:
+                if (baseGameDef.gameObject.activeInHierarchy == false)
+                {
+                    baseGameDef.gameObject.SetActive(true);
+                    baseGameDef.StartUp();
+                    baseSplashes.gameObject.SetActive(false);
+                }
+                break;
+            case GameStates.menu:
+                if (baseMenu.gameObject.activeInHierarchy == false)
+                {
+                    baseMenu.gameObject.SetActive(true);
+                    baseMenu.StartUp();
+                    baseSplashes.gameObject.SetActive(false);
+                    baseGameDef.gameObject.SetActive(false);
+                }
+                break;
             case GameStates.notices:
                 if (baseNotices.gameObject.activeInHierarchy == false)
                 {
+                    if (cM != null)
+                    {
+                        cM.hasBeenToMenu = true;
+                    }
                     baseNotices.gameObject.SetActive(true);
                     baseNotices.StartUp();
+                    baseMenu.gameObject.SetActive(false);
                 }
                 break;
             case GameStates.location:
