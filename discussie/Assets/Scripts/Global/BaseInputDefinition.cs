@@ -34,19 +34,19 @@ public class BaseInputDefinition : MonoBehaviour
 
     [SerializeField] private Button sendDefButton;
     [SerializeField] private Button sendNameButton;
-    
+
     [Space(30)]
     [SerializeField] private TextMeshProUGUI[] toBeAnimatedGlobalTexts;
-    [SerializeField] private List<float> toBeAnimatedGlobalTextsOpacities;
+    private List<float> toBeAnimatedGlobalTextsOpacities = new();
     [SerializeField] private Image[] toBeAnimatedGlobalImages;
-    [SerializeField] private List<float> toBeAnimatedGlobalImagesOpacities;
+    private List<float> toBeAnimatedGlobalImagesOpacities = new();
 
     [Header("Animate Def In")]
     private Coroutine defInRoutine;
     [SerializeField] private TextMeshProUGUI[] toBeAnimatedDefTexts;
-    [SerializeField] private List<float> toBeAnimatedDefTextsOpacities;
+    private List<float> toBeAnimatedDefTextsOpacities = new();
     [SerializeField] private Image[] toBeAnimatedDefImages;
-    [SerializeField] private List<float> toBeAnimatedDefImagesOpacities;
+    private List<float> toBeAnimatedDefImagesOpacities = new();
     [Space(10)]
     [SerializeField] private float animateDefInDuration;
     [SerializeField] private AnimationCurve animateDefInCurve;
@@ -56,9 +56,9 @@ public class BaseInputDefinition : MonoBehaviour
     [SerializeField] private AnimationCurve animateDefOutCurve;
     [Header("Animate Name In")]
     [SerializeField] private TextMeshProUGUI[] toBeAnimatedNameTexts;
-    [SerializeField] private List<float> toBeAnimatedNameTextsOpacities;
+    private List<float> toBeAnimatedNameTextsOpacities = new();
     [SerializeField] private Image[] toBeAnimatedNameImages;
-    [SerializeField] private List<float> toBeAnimatedNameImagesOpacities;
+    private List<float> toBeAnimatedNameImagesOpacities = new();
     [Space(10)]
     private Coroutine nameInRoutine;
     [SerializeField] private float animateNameInDuration;
@@ -87,7 +87,7 @@ public class BaseInputDefinition : MonoBehaviour
 
         //Generate random highloight colors
         for (int i = 0; i < defHighlightCols.Length; i++)
-		{
+        {
             defHighlightCols[i] = highlightColorManager.GetHighlightHex();
         }
         sourceHighlightCol = highlightColorManager.GetHighlightHex();
@@ -101,9 +101,9 @@ public class BaseInputDefinition : MonoBehaviour
         nameInputField.enabled = false;
         nameInputField.GetComponent<Image>().raycastTarget = false;
 
-		//Get all original opacities set everything to transparant
-		for (int i = 0; i < toBeAnimatedGlobalTexts.Length; i++)
-		{
+        //Get all original opacities set everything to transparant
+        for (int i = 0; i < toBeAnimatedGlobalTexts.Length; i++)
+        {
             toBeAnimatedGlobalTextsOpacities.Add(toBeAnimatedGlobalTexts[i].color.a);
             toBeAnimatedGlobalTexts[i].color = new Color(toBeAnimatedGlobalTexts[i].color.r, toBeAnimatedGlobalTexts[i].color.g, toBeAnimatedGlobalTexts[i].color.b, toBeAnimatedGlobalTexts[i].color.a);
         }
@@ -142,30 +142,30 @@ public class BaseInputDefinition : MonoBehaviour
 
     void Update()
     {
-        if(ownDefinition != "" && ownRating != Vector2.one * -99 && atDefinition && !inTransition) 
-        { 
-            sendDefButton.gameObject.SetActive(true); 
+        if (ownDefinition != "" && ownRating != Vector2.one * -99 && atDefinition && !inTransition)
+        {
+            sendDefButton.gameObject.SetActive(true);
             sendNameButton.gameObject.SetActive(false);
         }
         else if (ownSource != "" && !atDefinition && !delivered && !inTransition)
-		{
-            sendDefButton.gameObject.SetActive(false); 
+        {
+            sendDefButton.gameObject.SetActive(false);
             sendNameButton.gameObject.SetActive(true);
         }
-		else if(!inTransition)
-		{
+        else if (!inTransition)
+        {
             sendDefButton.gameObject.SetActive(false);
             sendNameButton.gameObject.SetActive(false);
         }
     }
 
     private IEnumerator AnimateDefIn()
-	{
+    {
         inTransition = true;
         onDefinitionActivated.Invoke();
         definitionInputField.gameObject.SetActive(true);
         definitionInputField.enabled = true;
-        
+
 
         float _timeValue = 0;
 
@@ -206,7 +206,7 @@ public class BaseInputDefinition : MonoBehaviour
     }
 
     public void StartDefOut()
-	{
+    {
         dataManager.currentSaveData.ownDefinition = ownDefinition;
         dataManager.UpdateSaveFile();
         if (defOutRoutine != null) { return; }
@@ -250,7 +250,7 @@ public class BaseInputDefinition : MonoBehaviour
 
     public void StartNameIn()
     {
-        
+
         if (nameInRoutine != null) { return; }
         StartCoroutine(AnimateNameIn());
     }
@@ -347,7 +347,7 @@ public class BaseInputDefinition : MonoBehaviour
     }
 
     public void TrySendOwnDefinition()
-	{
+    {
         //try uploading rating to server
         dataManager.ownDefinitionReady = true;
         //dataManager.TryNetworking();
@@ -356,13 +356,13 @@ public class BaseInputDefinition : MonoBehaviour
     }
 
     public void OnNewDefInput(string _inputString)
-	{
-        if(_inputString == "") { definitionDisplay.text = definitionPlaceholder; ownDefinition = ""; definitionInputField.caretColor = new Color(0.8f, 0, 0, 0); return; }
+    {
+        if (_inputString == "") { definitionDisplay.text = definitionPlaceholder; ownDefinition = ""; definitionInputField.caretColor = new Color(0.8f, 0, 0, 0); return; }
 
         definitionInputField.caretColor = new Color(0.8f, 0, 0, 1);
         ownDefinition = _inputString;
         definitionDisplay.text = reformatter.ReformatInputDefinitionField(_inputString, defHighlightCols);
-	}
+    }
 
     public void OnNewNameInput(string _inputString)
     {
