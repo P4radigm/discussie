@@ -117,6 +117,7 @@ public class SequenceManager : MonoBehaviour
                 {
                     baseLocation.gameObject.SetActive(true);
                     baseLocation.StartUp();
+                    baseNotices.gameObject.SetActive(false);
                 }
                 break;
             case GameStates.definitionA:
@@ -125,13 +126,15 @@ public class SequenceManager : MonoBehaviour
 				{
                     baseDefinitionA.gameObject.SetActive(true);
                     baseDefinitionA.StartUp();
-				}
+                    baseLocation.gameObject.SetActive(false);
+                }
                 break;
             case GameStates.playingA:
                 if (baseGameplayA.gameObject.activeInHierarchy == false)
                 {
                     baseGameplayA.gameObject.SetActive(true);
                     baseGameplayA.StartUp();
+                    baseDefinitionA.gameObject.SetActive(false);
                 }
                 break;
             case GameStates.definitionB:
@@ -147,6 +150,7 @@ public class SequenceManager : MonoBehaviour
                 {
                     baseGameplayB.gameObject.SetActive(true);
                     baseGameplayB.StartUp();
+                    baseDefinitionB.gameObject.SetActive(false);
                 }
                 break;
             case GameStates.definitionC:
@@ -162,6 +166,7 @@ public class SequenceManager : MonoBehaviour
                 {
                     baseGameplayC.gameObject.SetActive(true);
                     baseGameplayC.StartUp();
+                    baseDefinitionC.gameObject.SetActive(false);
                 }
                 break;
             case GameStates.definitionInput:
@@ -177,6 +182,7 @@ public class SequenceManager : MonoBehaviour
                 {
                     baseEnd.gameObject.SetActive(true);
                     baseEnd.StartUp();
+                    baseInput.gameObject.SetActive(false);
                 }
                 break;
         }

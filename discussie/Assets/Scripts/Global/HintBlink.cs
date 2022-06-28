@@ -15,7 +15,9 @@ public class HintBlink : MonoBehaviour
 	[SerializeField] private float initiatingTime;
 	[SerializeField] private float loopTime;
 	private float timer;
-	private Coroutine blinkRoutine;
+	private bool animateBlinkInit = true;
+	private bool animateBlink = false;
+	private float animateBlinkTimeValue = 0;
 	[Range(0,1)] [SerializeField] private float blinkDepth;
 	[SerializeField] private float blinkDuration;
 	[SerializeField] private AnimationCurve blinkCurve;
@@ -54,23 +56,28 @@ public class HintBlink : MonoBehaviour
 		{
 			timer = loopTime;
 		}
+
+		AnimBlink();
 	}
 
 	public void StartBlink()
 	{
-		if(blinkRoutine == null)
-		{
-			blinkRoutine = StartCoroutine(Blink());
-		}
+		if (!animateBlink) { animateBlink = true; }
 	}
 
-	private IEnumerator Blink()
+	private void AnimBlink()
 	{
-		float TimeValue = 0;
-		while (TimeValue < 1)
+		if(!animateBlink) { return; }
+
+		if (animateBlinkInit)
 		{
-			TimeValue += Time.deltaTime / blinkDuration;
-			float EvaluatedTimeValue = blinkCurve.Evaluate(TimeValue);
+			animateBlinkTimeValue = 0;
+			animateBlinkInit = false;
+		}
+
+		if(animateBlinkTimeValue > 0 && animateBlinkTimeValue < blinkDuration)
+		{
+			float EvaluatedTimeValue = blinkCurve.Evaluate(animateBlinkTimeValue / blinkDuration);
 
 			for (int i = 0; i < subscribedImages.Length; i++)
 			{
@@ -80,9 +87,14 @@ public class HintBlink : MonoBehaviour
 			{
 				subscribedTexts[i].color = new Color(subscribedTexts[i].color.r, subscribedTexts[i].color.g, subscribedTexts[i].color.b, Mathf.Lerp((1 - blinkDepth) * textOpacities[i], textOpacities[i], EvaluatedTimeValue));
 			}
-
-			yield return null;
 		}
-		blinkRoutine = null;
+		else if(animateBlinkTimeValue > blinkDuration)
+		{
+			animateBlinkInit = true;
+			animateBlink = false;
+		}
+
+		animateBlinkTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateBlinkTimeValue, 0, blinkDuration + 0.01f);
 	}
 }

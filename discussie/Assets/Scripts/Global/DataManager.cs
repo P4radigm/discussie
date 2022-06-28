@@ -113,9 +113,6 @@ public class DataManager : MonoBehaviour
     public bool ownRatingCReady = false;
     public NetworkingStatus uploadedOwnRatingC = NetworkingStatus.negative;
 
-    private bool lastFrameServerConnection;
-    private int serverConnectAmount = 0;
-
     //private Vector2 blacklist = new Vector2(-99, -99);
     private List<int> idBlacklist = new List<int>();
 

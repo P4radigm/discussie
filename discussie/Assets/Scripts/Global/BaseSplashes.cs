@@ -19,6 +19,9 @@ public class BaseSplashes : MonoBehaviour
 	[Space(10)]
 	[SerializeField] private float animateOutDurationLD;
 	[SerializeField] private AnimationCurve animateOutCurveLD;
+	private bool animateLDinit = true;
+	private bool animateLD = false;
+	private float animateLDtimeValue = 0;
 
 	[Header("Systemen van Polarisatie Anim")]
 	[SerializeField] private Image imageSvP;
@@ -32,6 +35,12 @@ public class BaseSplashes : MonoBehaviour
 	[SerializeField] private float animateOutDurationSvP;
 	[SerializeField] private AnimationCurve animateOutCurveSvP;
 	[SerializeField] private Vector2 bottomAnchoredFinalPosition;
+	private bool animateSvPinit = true;
+	private bool animateSvP = false;
+	private float animateSvPtimeValue = 0;
+	private RectTransform RT;
+	private Vector2 BotAnchoredPos;
+
 	private bool LDtakesLonger = false;
 
 	public void StartUp()
@@ -40,110 +49,112 @@ public class BaseSplashes : MonoBehaviour
 		pM = PlatformManager.instance;
 		LDtakesLonger = animateInDelayLD + animateInDurationLD + displayTimeLD + animateOutDurationLD > animateInDelaySvP + animateInDurationSvP + displayTimeSvP + animateOutDurationSvP;
 
+		RT = imageSvP.GetComponent<RectTransform>();
+
 		//Animate
-		StartCoroutine(AnimateLD());
-		StartCoroutine(AnimateSvP());
+		if (!animateLD) { animateLD = true; }
+		if (!animateSvP) { animateSvP = true; }	
 	}
 
-	private IEnumerator AnimateLD()
+	private void Update()
 	{
-		//Wait for potential delay
-		yield return new WaitForSeconds(animateInDelayLD);
-
-		//Fade in
-		float TimeValueIn = 0;
-		while (TimeValueIn < 1)
-		{
-			TimeValueIn += Time.deltaTime / animateInDurationLD;
-			float EvaluatedTimeValueIn = animateInCurveLD.Evaluate(TimeValueIn);
-
-			float NewOpacity = Mathf.Lerp(0, 1, EvaluatedTimeValueIn);
-			imageLD.color = new Color(imageLD.color.r, imageLD.color.g, imageLD.color.b, NewOpacity);
-
-			yield return null;
-		}
-
-		//Display
-		yield return new WaitForSeconds(displayTimeLD);
-
-		//Fade Out
-		float TimeValueOut = 0;
-		while (TimeValueOut < 1)
-		{
-			TimeValueOut += Time.deltaTime / animateOutDurationLD;
-			float EvaluatedTimeValueOut = animateOutCurveLD.Evaluate(TimeValueOut);
-
-			float NewOpacity = Mathf.Lerp(1, 0, EvaluatedTimeValueOut);
-			imageLD.color = new Color(imageLD.color.r, imageLD.color.g, imageLD.color.b, NewOpacity);
-
-			yield return null;
-		}
-
-		if (LDtakesLonger)
-		{
-			sM.AddToGameState();
-		}
+		AnimSvP();
+		AnimLD();
 	}
 
-	private IEnumerator AnimateSvP()
+	private void AnimSvP()
 	{
-		//Wait for potential delay
-		yield return new WaitForSeconds(animateInDelaySvP);
+		if (!animateSvP) { return; }
 
-		//Fade in
-		float TimeValueIn = 0;
-		while (TimeValueIn < 1)
+		if (animateSvPinit)
 		{
-			TimeValueIn += Time.deltaTime / animateInDurationSvP;
-			float EvaluatedTimeValueIn = animateInCurveSvP.Evaluate(TimeValueIn);
+			animateSvPtimeValue = 0;
+			
+			//Change anchoring, without moving the image
+			Vector2 MidWorldPos = RT.position;
+			RT.anchorMax = new Vector2(0.5f, 0f);
+			RT.anchorMin = new Vector2(0.5f, 0f);
+			RT.position = MidWorldPos;
+			BotAnchoredPos = RT.anchoredPosition;
+			animateSvPinit = false;
+		}
+
+		if(animateSvPtimeValue > 0 && animateSvPtimeValue <= animateInDelaySvP)
+		{
+			//Wait for potential delay
+		}
+		else if(animateSvPtimeValue > animateInDelaySvP && animateSvPtimeValue <= animateInDelaySvP + animateInDurationSvP)
+		{
+			//Fade in
+			float EvaluatedTimeValueIn = animateInCurveSvP.Evaluate((animateSvPtimeValue - (animateInDelaySvP)) / animateInDurationSvP);
 
 			float NewOpacity = Mathf.Lerp(0, 1, EvaluatedTimeValueIn);
 			imageSvP.color = new Color(imageLD.color.r, imageLD.color.g, imageLD.color.b, NewOpacity);
-
-			yield return null;
 		}
-
-		//Display
-		yield return new WaitForSeconds(displayTimeSvP);
-
-		////Fade Out
-		//float TimeValueOut = 0;
-		//while (TimeValueOut < 1)
-		//{
-		//	TimeValueOut += Time.deltaTime / animateOutDurationSvP;
-		//	float EvaluatedTimeValueIn = animateOutCurveSvP.Evaluate(TimeValueOut);
-
-		//	float NewOpacity = Mathf.Lerp(1, 0, EvaluatedTimeValueIn);
-		//	imageSvP.color = new Color(imageLD.color.r, imageLD.color.g, imageLD.color.b, NewOpacity);
-
-		//	yield return null;
-		//}
-
-		//Animate to bottom position
-		RectTransform RT = imageSvP.GetComponent<RectTransform>();
-		//Change anchoring, without moving the image
-		Vector2 MidWorldPos = RT.position;
-		RT.anchorMax = new Vector2(0.5f, 0f);
-		RT.anchorMin = new Vector2(0.5f, 0f);
-		RT.position = MidWorldPos;
-		Vector2 BotAnchoredPos = RT.anchoredPosition;
-		//Get position
-		float TimeValueOut = 0;
-		while (TimeValueOut < 1)
+		else if(animateSvPtimeValue > animateInDelaySvP + animateInDurationSvP && animateSvPtimeValue <= animateInDelaySvP + animateInDurationSvP + displayTimeSvP)
 		{
-			TimeValueOut += Time.deltaTime / animateOutDurationSvP;
-			float EvaluatedTimeValueOut = animateOutCurveSvP.Evaluate(TimeValueOut);
+			//Display
+		}
+		else if(animateSvPtimeValue > animateInDelaySvP + animateInDurationSvP + displayTimeSvP && animateSvPtimeValue <= animateInDelaySvP + animateInDurationSvP + displayTimeSvP + animateOutDurationSvP)
+		{
+			float EvaluatedTimeValueOut = animateOutCurveSvP.Evaluate((animateSvPtimeValue - (animateInDelaySvP + animateInDurationSvP + displayTimeSvP)) / animateOutDurationSvP);
 			Vector2 NewPos = Vector2.Lerp(BotAnchoredPos, bottomAnchoredFinalPosition, EvaluatedTimeValueOut);
 
 			RT.anchoredPosition = NewPos;
-
-			yield return null;
 		}
-
-		if (!LDtakesLonger)
+		else if(animateSvPtimeValue > animateInDelaySvP + animateInDurationSvP + displayTimeSvP + animateOutDurationSvP && !LDtakesLonger)
 		{
 			sM.AddToGameState();
+			animateSvP = false;
+			animateSvPinit = true;
 		}
+
+		animateSvPtimeValue += Time.deltaTime;
+		Mathf.Clamp(animateSvPtimeValue, 0, animateInDelaySvP + animateInDurationSvP + displayTimeSvP + animateOutDurationSvP + 0.01f);
 	}
 
+	private void AnimLD()
+	{
+		if (!animateLD) { return; }
+
+		if (animateLDinit)
+		{
+			animateLDtimeValue = 0;
+			animateLDinit = false;
+		}
+
+		if(animateLDtimeValue > 0 && animateLDtimeValue <= animateInDelayLD)
+		{
+			//Wait for potential delay
+		}
+		else if(animateLDtimeValue > animateInDelayLD && animateLDtimeValue <= animateInDelayLD + animateInDurationLD)
+		{
+			//Fade in
+			float EvaluatedTimeValueIn = animateInCurveLD.Evaluate((animateLDtimeValue - (animateInDelayLD)) / animateInDurationLD);
+
+			float NewOpacity = Mathf.Lerp(0, 1, EvaluatedTimeValueIn);
+			imageLD.color = new Color(imageLD.color.r, imageLD.color.g, imageLD.color.b, NewOpacity);
+		}
+		else if(animateLDtimeValue > animateInDelayLD + animateInDurationLD && animateLDtimeValue <= animateInDelayLD + animateInDurationLD + displayTimeLD)
+		{
+			//Display
+		}
+		else if(animateLDtimeValue > animateInDelayLD + animateInDurationLD + displayTimeLD && animateLDtimeValue <= animateInDelayLD + animateInDurationLD + displayTimeLD + animateOutDurationLD)
+		{
+			//Fade out
+			float EvaluatedTimeValueOut = animateOutCurveLD.Evaluate((animateLDtimeValue - (animateInDelayLD + animateInDurationLD + displayTimeLD)) / animateOutDurationLD);
+
+			float NewOpacity = Mathf.Lerp(1, 0, EvaluatedTimeValueOut);
+			imageLD.color = new Color(imageLD.color.r, imageLD.color.g, imageLD.color.b, NewOpacity);
+		}
+		else if(animateLDtimeValue > animateInDelayLD + animateInDurationLD + displayTimeLD + animateOutDurationLD && LDtakesLonger)
+		{
+			sM.AddToGameState();
+			animateLD = false;
+			animateLDinit = true;
+		}
+
+		animateLDtimeValue += Time.deltaTime;
+		Mathf.Clamp(animateLDtimeValue, 0, animateInDelayLD + animateInDurationLD + displayTimeLD + animateOutDurationLD + 0.01f);
+	}
 }

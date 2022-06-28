@@ -40,17 +40,29 @@ public class BaseGameDef : MonoBehaviour
 	[SerializeField] private int endDefIndex;
 	[SerializeField] private float timeBetweenScroll;
 	[SerializeField] private float scrollDuration;
+	private bool animateScrollInit = true;
+	private bool animateScroll = false;
+	private float animateScrollTimeValue = 0;
+	private float newScrollTimeValue = 0;
 
 	[Header("Fade Animation Settings")]
 	[SerializeField] private float delayBeforeAnimate;
 	[SerializeField] private float animateInDuration;
 	[SerializeField] private float animateInDurationButton;
 	[SerializeField] private AnimationCurve animateInCurve;
+	private bool animateFadeInInit = true;
+	private bool animateFadeIn = false;
+	private float animateFadeInTimeValue = 0;
+	private float extraScrollWaitTime = 0;
 	[Space(10)]
 	[SerializeField] private float displayDuration;
 	[Space(10)]
 	[SerializeField] private float animateOutDuration;
 	[SerializeField] private AnimationCurve animateOutCurve;
+	private bool animateFadeOutInit = true;
+	private bool animateFadeOut = false;
+	private float animateFadeOutTimeValue = 0;
+
 	private int returnIndex;
 
 	public void StartUp()
@@ -74,66 +86,89 @@ public class BaseGameDef : MonoBehaviour
 		nummer.text = $"<color=#{hCM.GetHighlightHex()}>{endDefinition.index}.</color>";
 		definitie.text = ReformatDefinition(endDefinition);
 
-		StartCoroutine(AnimateFadeIn());
-		if (scroll) { StartCoroutine(AnimateScroll()); }
+		if (scroll) { extraScrollWaitTime = Mathf.Clamp(scrollDuration - animateInDuration, 0, Mathf.Infinity); }
+
+		if (!animateFadeIn) { animateFadeIn = true; }
+		if (scroll) { if (!animateScroll) { animateScroll = true; } }
 	}
 
-	private IEnumerator AnimateFadeIn()
+	private void Update()
 	{
-		//Wait for potential delay
-		yield return new WaitForSeconds(delayBeforeAnimate);
+		AnimFadeIn();
+		AnimScroll();
+		AnimFadeOut();
+	}
 
-		//Fade in
-		float TimeValueIn = 0;
-		while (TimeValueIn < 1)
+	private void AnimFadeIn()
+	{		
+		if (!animateFadeIn) { return; }
+
+		if (animateFadeInInit)
 		{
-			TimeValueIn += Time.deltaTime / animateInDuration;
-			float EvaluatedTimeValueIn = animateInCurve.Evaluate(TimeValueIn);
+			animateFadeInTimeValue = 0;
+			animateFadeInInit = false;
+		}
+
+		if (animateFadeInTimeValue > 0 && animateFadeInTimeValue <= delayBeforeAnimate)
+		{
+			//Wait for potential delay
+		}
+		else if (animateFadeInTimeValue > delayBeforeAnimate && animateFadeInTimeValue <= delayBeforeAnimate + animateInDuration)
+		{
+			//Fade in
+			float EvaluatedTimeValueIn = animateInCurve.Evaluate((animateFadeInTimeValue - delayBeforeAnimate) / animateInDuration);
 
 			float NewOpacity = Mathf.Lerp(0, 1, EvaluatedTimeValueIn);
 			spel.color = new Color(spel.color.r, spel.color.g, spel.color.b, NewOpacity);
 			het.color = new Color(het.color.r, het.color.g, het.color.b, NewOpacity * hetOpacity);
 			nummer.color = new Color(nummer.color.r, nummer.color.g, nummer.color.b, NewOpacity);
 			definitie.color = new Color(definitie.color.r, definitie.color.g, definitie.color.b, NewOpacity);
-
-
-			yield return null;
 		}
-
-		//Display
-		if (scroll) { yield return new WaitForSeconds(Mathf.Clamp(scrollDuration - animateInDuration, 0, Mathf.Infinity)); }
-		yield return new WaitForSeconds(displayDuration);	
-
-		float TimeValueInButton = 0;
-		while (TimeValueInButton < 1)
+		else if (animateFadeInTimeValue > delayBeforeAnimate + animateInDuration && animateFadeInTimeValue <= delayBeforeAnimate + animateInDuration + displayDuration + extraScrollWaitTime)
 		{
-			TimeValueInButton += Time.deltaTime / animateInDuration;
-			float EvaluatedTimeValueInButton = animateInCurve.Evaluate(TimeValueInButton);
+			//Wait for scroll to finish and display
+		}
+		else if(animateFadeInTimeValue > delayBeforeAnimate + animateInDuration + displayDuration + extraScrollWaitTime && animateFadeInTimeValue <= delayBeforeAnimate + animateInDuration + displayDuration + extraScrollWaitTime + animateInDurationButton)
+		{
+			float EvaluatedTimeValueInButton = animateInCurve.Evaluate((animateFadeInTimeValue - (delayBeforeAnimate + animateInDuration + displayDuration + extraScrollWaitTime)) / animateInDurationButton);
 
 			float NewOpacity = Mathf.Lerp(0, 1, EvaluatedTimeValueInButton);
 			doorgaanKnopBG.color = new Color(doorgaanKnopBG.color.r, doorgaanKnopBG.color.g, doorgaanKnopBG.color.b, NewOpacity * doorgaanKnopBGopacity);
 			doorgaanKnopText.color = new Color(doorgaanKnopBG.color.r, doorgaanKnopBG.color.g, doorgaanKnopBG.color.b, NewOpacity);
-
-			yield return null;
 		}
-		doorgaanKnop.interactable = true;
-		doorgaanKnop.GetComponent<HintBlink>().Activate();
+		else if (animateFadeInTimeValue > delayBeforeAnimate + animateInDuration + displayDuration + extraScrollWaitTime + animateInDurationButton)
+		{
+			doorgaanKnop.interactable = true;
+			doorgaanKnop.GetComponent<HintBlink>().Activate();
+			animateFadeInInit = true;
+			animateFadeIn = false;
+		}
+
+		animateFadeInTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateFadeInTimeValue, 0, delayBeforeAnimate + animateInDuration + displayDuration + extraScrollWaitTime + animateInDurationButton + 0.01f);
 	}
 
 	public void FadeOut()
 	{
 		doorgaanKnop.interactable = false;
 		doorgaanKnop.GetComponent<HintBlink>().DeActivate();
-		StartCoroutine(AnimateFadeOut());
+		animateFadeOut = true;
+		//StartCoroutine(AnimateFadeOut());
 	}
 
-	private IEnumerator AnimateFadeOut()
+	private void AnimFadeOut()
 	{
-		float TimeValueOut = 0;
-		while (TimeValueOut < 1)
+		if (!animateFadeOut) { return; }
+
+		if (animateFadeOutInit)
 		{
-			TimeValueOut += Time.deltaTime / animateOutDuration;
-			float EvaluatedTimeValueOut = animateOutCurve.Evaluate(TimeValueOut);
+			animateFadeOutTimeValue = 0;
+			animateFadeOutInit = false;
+		}
+
+		if(animateFadeOutTimeValue > 0 && animateFadeOutTimeValue <= animateOutDuration)
+		{
+			float EvaluatedTimeValueOut = animateOutCurve.Evaluate(animateFadeOutTimeValue / animateOutDuration);
 
 			float NewOpacity = Mathf.Lerp(1, 0, EvaluatedTimeValueOut);
 			spel.color = new Color(spel.color.r, spel.color.g, spel.color.b, NewOpacity);
@@ -142,27 +177,51 @@ public class BaseGameDef : MonoBehaviour
 			definitie.color = new Color(definitie.color.r, definitie.color.g, definitie.color.b, NewOpacity);
 			doorgaanKnopBG.color = new Color(doorgaanKnopBG.color.r, doorgaanKnopBG.color.g, doorgaanKnopBG.color.b, NewOpacity * doorgaanKnopBGopacity);
 			doorgaanKnopText.color = new Color(doorgaanKnopBG.color.r, doorgaanKnopBG.color.g, doorgaanKnopBG.color.b, NewOpacity);
-
-			yield return null;
+		}
+		else if(animateFadeOutTimeValue > animateOutDuration)
+		{
+			sM.AddToGameState();
+			animateFadeOutInit = true;
+			animateFadeOut = false;
 		}
 
+		animateFadeOutTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateFadeOutTimeValue, 0, animateOutDuration + 0.01f);
 
-		sM.AddToGameState();
 	}
 
-	private IEnumerator AnimateScroll()
+	private void AnimScroll()
 	{
-		float TimeValue = 0;
-		while (TimeValue < scrollDuration)
+		if (!animateScroll) { return; }
+
+		if (animateScrollInit)
 		{
-			SetNewDefinition();
-			TimeValue += timeBetweenScroll;
-			yield return new WaitForSeconds(timeBetweenScroll);
+			newScrollTimeValue = 0;
+			animateScrollTimeValue = 0;
+			animateScrollInit = false;
 		}
 
-		GameDefinitie endDefinition = useEnglish ? engelsDefs[endDefIndex] : nederlandsDefs[endDefIndex];
-		nummer.text = $"<color=#{hCM.GetHighlightHex()}>{endDefinition.index}.</color>";
-		definitie.text = ReformatDefinition(endDefinition);
+		if (animateScrollTimeValue > 0 && animateScrollTimeValue <= scrollDuration)
+		{
+			if(newScrollTimeValue > timeBetweenScroll)
+			{
+				SetNewDefinition();
+				newScrollTimeValue = 0;
+			}
+			newScrollTimeValue += Time.deltaTime;
+		}
+		else if (animateScrollTimeValue > scrollDuration)
+		{
+			GameDefinitie endDefinition = useEnglish ? engelsDefs[endDefIndex] : nederlandsDefs[endDefIndex];
+			nummer.text = $"<color=#{hCM.GetHighlightHex()}>{endDefinition.index}.</color>";
+			definitie.text = ReformatDefinition(endDefinition);
+
+			animateScrollInit = true;
+			animateScroll = false;
+		}
+
+		animateScrollTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateScrollTimeValue, 0, scrollDuration + 0.01f);
 	}
 
 	private void SetNewDefinition()

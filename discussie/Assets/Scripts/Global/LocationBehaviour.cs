@@ -29,13 +29,20 @@ public class LocationBehaviour : MonoBehaviour
 	[SerializeField] private TextMeshProUGUI staticText;
 	[SerializeField] private float alphaZeroDistance;
 	[SerializeField] private AnimationCurve colorChangeCurve;
+	[SerializeField] private Vector2 middleRange;
 
 	[Header("Animation settings")]
 	[SerializeField] private float toCenterDuration;
 	[SerializeField] private AnimationCurve toCenterCurve;
 
-	private Coroutine animateToCenterRoutine;
-	private Coroutine animateResidualForceRoutine;
+	private bool animateToCenterInit = true;
+	private bool animateToCenter = false;
+	private float animateToCenterTimeValue = 0;
+	private float distanceNeeded;
+	private List<float> initialXPositions = new();
+
+	//private Coroutine animateToCenterRoutine;
+	//private Coroutine animateResidualForceRoutine;
 
 	public void CreateTextElements()
 	{
@@ -67,6 +74,7 @@ public class LocationBehaviour : MonoBehaviour
 
 	private void Update()
 	{
+		AnimToCenter();
 		if (bL.active)
 		{
 			UpdateLidwoord();
@@ -79,7 +87,7 @@ public class LocationBehaviour : MonoBehaviour
 			bool isAtZero = false;
 			for (int q = 0; q < textElements.Count; q++)
 			{
-				if(textElements[q].GetComponent<RectTransform>().anchoredPosition.x == 0)
+				if(textElements[q].GetComponent<RectTransform>().anchoredPosition.x <= middleRange.y && textElements[q].GetComponent<RectTransform>().anchoredPosition.x >= middleRange.x)
 				{
 					isAtZero = true;
 				}
@@ -118,8 +126,7 @@ public class LocationBehaviour : MonoBehaviour
 					{
 						//Finger has hit target
 						parentedTouchId = Input.touches[i].fingerId;
-						if(animateResidualForceRoutine != null) { StopCoroutine(animateResidualForceRoutine); }
-						if(animateToCenterRoutine != null) { StopCoroutine(animateToCenterRoutine); }
+						if(animateToCenter) { animateToCenter = false; animateToCenterInit = true; }
 						continueButton.gameObject.SetActive(false);
 
 						for (int t = 0; t < textElements.Count; t++)
@@ -191,35 +198,47 @@ public class LocationBehaviour : MonoBehaviour
 
 	private void StartAnimateToCenter()
 	{
-		if(animateToCenterRoutine != null) { StopCoroutine(animateToCenterRoutine); }
-		animateToCenterRoutine = StartCoroutine(AnimateToCenter());
+		animateToCenterInit = true;
+		animateToCenter = true;
 	}
 
-	private IEnumerator AnimateToCenter()
+	private void AnimToCenter()
 	{
-		float _timeValue = 0;
-		float _distanceNeeded = -textElements[getClosestElementToMiddleIndex()].GetComponent<RectTransform>().anchoredPosition.x;
-		float[] initalXarray = new float[textElements.Count];
+		if(!animateToCenter) { return; }
 
-		for (int i = 0; i < initalXarray.Length; i++)
+		if (animateToCenterInit)
 		{
-			initalXarray[i] = textElements[i].GetComponent<RectTransform>().anchoredPosition.x;
-		}
+			distanceNeeded = -textElements[getClosestElementToMiddleIndex()].GetComponent<RectTransform>().anchoredPosition.x;
 
-		while (_timeValue < 1)
-		{
-			_timeValue += Time.deltaTime / toCenterDuration;
-			float _evaluatedTimeValue = toCenterCurve.Evaluate(_timeValue);
+			initialXPositions.Clear();
 
 			for (int i = 0; i < textElements.Count; i++)
 			{
-				textElements[i].GetComponent<RectTransform>().anchoredPosition = Vector2.Lerp(new Vector2(initalXarray[i], 0), new Vector2(initalXarray[i] + _distanceNeeded, 0), _evaluatedTimeValue);
+				initialXPositions.Add(textElements[i].GetComponent<RectTransform>().anchoredPosition.x);
 			}
 
-			yield return null;
+			animateToCenterTimeValue = 0;
+			animateToCenterInit = false;
 		}
 
-		animateToCenterRoutine = null;
+		if(animateToCenterTimeValue > 0 && animateToCenterTimeValue <= toCenterDuration)
+		{
+			float EvaluatedTimeValue = toCenterCurve.Evaluate(animateToCenterTimeValue / toCenterDuration);
+
+			for (int i = 0; i < textElements.Count; i++)
+			{
+				textElements[i].GetComponent<RectTransform>().anchoredPosition = Vector2.Lerp(new Vector2(initialXPositions[i], 0), new Vector2(initialXPositions[i] + distanceNeeded, 0), EvaluatedTimeValue);
+			}
+		}
+		else if(animateToCenterTimeValue > toCenterDuration)
+		{
+			animateToCenterInit = true;
+			animateToCenter = false;
+		}
+
+		animateToCenterTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateToCenterTimeValue, 0, toCenterDuration + 0.01f);
+
 	}
 
 	private void UpdateLidwoord()

@@ -32,13 +32,34 @@ public class BaseNotices : MonoBehaviour
 	private Image[] internetImages;
 	private List<float> internetImagesOpacities = new();
 
-	private Coroutine animateInRoutine;
+	//private Coroutine animateInRoutine;
 	[SerializeField] private float animateInDuration;
 	[SerializeField] private AnimationCurve animateInCurve;
+
 	[SerializeField] private float continueSeconds;
-	private Coroutine animateOutRoutine;
+	//private Coroutine animateOutRoutine;
 	[SerializeField] private float animateOutDuration;
 	[SerializeField] private AnimationCurve animateOutCurve;
+
+	private bool animatePrivacyInInit = true;
+	private bool animatePrivacyIn = false;
+	private float animatePrivacyInTimeValue = 0;
+
+	private bool animatePrivacyOutInit = true;
+	private bool animatePrivacyOut = false;
+	private float animatePrivacyOutTimeValue = 0;
+
+	private bool animateInternetInInit = true;
+	private bool animateInternetIn = false;
+	private float animateInternetInTimeValue = 0;
+
+	private bool animateInternetOutInit = true;
+	private bool animateInternetOut = false;
+	private float animateInternetOutTimeValue = 0;
+
+	private List<float> startTextOpacities = new();
+	private List<float> startImageOpacities = new();
+
 	private float ogInternetCheckInterval;
 	private bool internetStatusLastFrame;
 	private string internetHighlightOne;
@@ -103,10 +124,7 @@ public class BaseNotices : MonoBehaviour
 		}
 
 		//Animate privacy in
-		if (animateInRoutine == null)
-		{
-			animateInRoutine = StartCoroutine(AnimateIn(privacyTexts, privacyImages, privacyTextsOpacities, privacyImagesOpacities, privacyButton));
-		}
+		animatePrivacyIn = true;
 	}
 
 	public void TransitionToInternet()
@@ -115,12 +133,18 @@ public class BaseNotices : MonoBehaviour
 		PlatformManager.instance.internetCheckInterval = 1;
 		DataManager.instance.currentSaveData.privacyCheck = true;
 		DataManager.instance.UpdateSaveFile();
-		StartCoroutine(AnimateOut(privacyTexts, privacyImages));
+
+		animatePrivacyOut = true;
 	}
 
 	private void Update()
 	{
-		if(internetStatusLastFrame == PlatformManager.instance.hasInternetConnection) { return; }
+		AnimPrivacyIn();
+		AnimPrivacyOut();
+		AnimInternetIn();
+		AnimInternetOut();
+
+		if (internetStatusLastFrame == PlatformManager.instance.hasInternetConnection) { return; }
 
 		internetBody.text = UpdateInternetText(internetHighlightOne, internetHighlightTwo, internetHighlightThree, internetHighlightSource);
 
@@ -130,8 +154,7 @@ public class BaseNotices : MonoBehaviour
 	public void CloseDown()
 	{
 		PlatformManager.instance.internetCheckInterval = ogInternetCheckInterval;
-		if (animateOutRoutine != null) { return; } 
-		StartCoroutine(AnimateOut(internetTexts, internetImages));
+		animateInternetOut = true;
 	}
 
 	private string FormatPrivacyText()
@@ -164,115 +187,223 @@ public class BaseNotices : MonoBehaviour
 		return _outputString;
 	}
 
-	private IEnumerator AnimateIn(TextMeshProUGUI[] texts, Image[] images, List<float> textOpacities, List<float> imageOpacities, Button button)
+	private void AnimPrivacyIn()
 	{
-		if (texts == privacyTexts)
+		if (!animatePrivacyIn) { return; }
+
+		if (animatePrivacyInInit)
 		{
 			privacyContainer.SetActive(true);
 			onPrivacyActivated.Invoke();
-		}
-		else
-		{
-			internetContainer.SetActive(true);
-			onInternetActivated.Invoke();
-		}
-		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Length];
-		for (int i = 0; i < texts.Length; i++)
-		{
-			_startTextOpacities[i] = texts[i].color.a;
-		}
-		float[] _startImageOpacities = new float[images.Length];
-		for (int i = 0; i < images.Length; i++)
-		{
-			_startImageOpacities[i] = images[i].color.a;
-		}
 
-		while (_timeValue < 1)
-		{
-			_timeValue += Time.deltaTime / animateInDuration;
-			float _evaluatedTimeValue = animateInCurve.Evaluate(_timeValue);
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
 
-			for (int i = 0; i < texts.Length; i++)
+			for (int i = 0; i < privacyTexts.Length; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], textOpacities[i], _evaluatedTimeValue);
-				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
+				startTextOpacities.Add(privacyTexts[i].color.a);
 			}
-			for (int i = 0; i < images.Length; i++)
+			for (int i = 0; i < privacyImages.Length; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], imageOpacities[i], _evaluatedTimeValue);
-				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
+				startImageOpacities.Add(privacyImages[i].color.a);
 			}
 
-
-			yield return null;
+			animatePrivacyInTimeValue = 0;
+			animatePrivacyInInit = false;
 		}
-		if(texts == privacyTexts) { onPrivacyAnimatedIn.Invoke(); active = true; }
-		else { onInternetAnimatedIn.Invoke(); }
-		yield return new WaitForSeconds(continueSeconds);
-		button.gameObject.SetActive(true);
-		button.gameObject.GetComponent<HintBlink>().Activate();
-		animateInRoutine = null;
+
+		if (animatePrivacyInTimeValue > 0 && animatePrivacyInTimeValue < animateInDuration)
+		{
+			float EvaluatedTimeValue = animateInCurve.Evaluate(animatePrivacyInTimeValue / animateInDuration);
+
+			for (int i = 0; i < privacyTexts.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], privacyTextsOpacities[i], EvaluatedTimeValue);
+				privacyTexts[i].color = new Color(privacyTexts[i].color.r, privacyTexts[i].color.g, privacyTexts[i].color.b, _newOpacity);
+			}
+			for (int i = 0; i < privacyImages.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], privacyImagesOpacities[i], EvaluatedTimeValue);
+				privacyImages[i].color = new Color(privacyImages[i].color.r, privacyImages[i].color.g, privacyImages[i].color.b, _newOpacity);
+			}
+		}
+		else if (animatePrivacyInTimeValue > animateInDuration)
+		{
+			onPrivacyAnimatedIn.Invoke();
+			active = true;
+
+			privacyButton.gameObject.SetActive(true);
+			privacyButton.gameObject.GetComponent<HintBlink>().Activate();
+
+			animatePrivacyInInit = true;
+			animatePrivacyIn = false;
+		}
+
+		animatePrivacyInTimeValue += Time.deltaTime;
+		Mathf.Clamp(animatePrivacyInTimeValue, 0, animateInDuration + 0.01f);
 	}
 
-	private IEnumerator AnimateOut(TextMeshProUGUI[] texts, Image[] images)
+	private void AnimPrivacyOut()
 	{
-		if (texts == privacyTexts)
+		if (!animatePrivacyOut) { return; }
+
+		if (animatePrivacyOutInit)
 		{
 			onPrivacyAnimateOut.Invoke();
 			privacyButton.GetComponent<HintBlink>().DeActivate();
+
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
+
+			for (int i = 0; i < privacyTexts.Length; i++)
+			{
+				startTextOpacities.Add(privacyTexts[i].color.a);
+			}
+			for (int i = 0; i < privacyImages.Length; i++)
+			{
+				startImageOpacities.Add(privacyImages[i].color.a);
+			}
+
+			animatePrivacyOutTimeValue = 0;
+			animatePrivacyOutInit = false;
 		}
-		else
+
+		if (animatePrivacyOutTimeValue > 0 && animatePrivacyOutTimeValue < animateOutDuration)
+		{
+			float EvaluatedTimeValue = animateOutCurve.Evaluate(animatePrivacyOutTimeValue / animateOutDuration);
+
+			for (int i = 0; i < privacyTexts.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], 0, EvaluatedTimeValue);
+				privacyTexts[i].color = new Color(privacyTexts[i].color.r, privacyTexts[i].color.g, privacyTexts[i].color.b, _newOpacity);
+			}
+			for (int i = 0; i < privacyImages.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], 0, EvaluatedTimeValue);
+				privacyImages[i].color = new Color(privacyImages[i].color.r, privacyImages[i].color.g, privacyImages[i].color.b, _newOpacity);
+			}
+		}
+		else if (animatePrivacyOutTimeValue > animateOutDuration)
+		{
+			privacyContainer.SetActive(false);
+			animateInternetIn = true;
+
+			animatePrivacyOutInit = true;
+			animatePrivacyOut = false;
+		}
+
+		animatePrivacyOutTimeValue += Time.deltaTime;
+		Mathf.Clamp(animatePrivacyOutTimeValue, 0, animateOutDuration + 0.01f);
+	}
+
+	private void AnimInternetIn()
+	{
+		if (!animateInternetIn) { return; }
+
+		if (animateInternetInInit)
+		{
+			internetContainer.SetActive(true);
+			onInternetActivated.Invoke();
+
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
+
+			for (int i = 0; i < internetTexts.Length; i++)
+			{
+				startTextOpacities.Add(internetTexts[i].color.a);
+			}
+			for (int i = 0; i < internetImages.Length; i++)
+			{
+				startImageOpacities.Add(internetImages[i].color.a);
+			}
+
+			animateInternetInTimeValue = 0;
+			animateInternetInInit = false;
+		}
+
+		if (animateInternetInTimeValue > 0 && animateInternetInTimeValue < animateInDuration)
+		{
+			float EvaluatedTimeValue = animateInCurve.Evaluate(animateInternetInTimeValue / animateInDuration);
+
+			for (int i = 0; i < internetTexts.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], internetTextsOpacities[i], EvaluatedTimeValue);
+				internetTexts[i].color = new Color(internetTexts[i].color.r, internetTexts[i].color.g, internetTexts[i].color.b, _newOpacity);
+			}
+			for (int i = 0; i < internetImages.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], internetImagesOpacities[i], EvaluatedTimeValue);
+				internetImages[i].color = new Color(internetImages[i].color.r, internetImages[i].color.g, internetImages[i].color.b, _newOpacity);
+			}
+		}
+		else if (animateInternetInTimeValue > animateInDuration)
+		{
+			onInternetAnimatedIn.Invoke();
+
+			internetButton.gameObject.SetActive(true);
+			internetButton.gameObject.GetComponent<HintBlink>().Activate();
+
+			animatePrivacyInInit = true;
+			animatePrivacyIn = false;
+		}
+
+		animateInternetInTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateInternetInTimeValue, 0, animateInDuration + 0.01f);
+	}
+
+	private void AnimInternetOut()
+	{
+		if (!animateInternetOut) { return; }
+
+		if (animateInternetOutInit)
 		{
 			onInternetAnimateOut.Invoke();
 			internetButton.GetComponent<HintBlink>().DeActivate();
-		}
-		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Length];
-		for (int i = 0; i < texts.Length; i++)
-		{
-			_startTextOpacities[i] = texts[i].color.a;
-		}
-		float[] _startImageOpacities = new float[images.Length];
-		for (int i = 0; i < images.Length; i++)
-		{
-			_startImageOpacities[i] = images[i].color.a;
-		}
 
-		while (_timeValue < 1)
-		{
-			_timeValue += Time.deltaTime / animateOutDuration;
-			float _evaluatedTimeValue = animateOutCurve.Evaluate(_timeValue);
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
 
-			for (int i = 0; i < texts.Length; i++)
+			for (int i = 0; i < internetTexts.Length; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 0, _evaluatedTimeValue);
-				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
+				startTextOpacities.Add(internetTexts[i].color.a);
 			}
-			for (int i = 0; i < images.Length; i++)
+			for (int i = 0; i < internetImages.Length; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 0, _evaluatedTimeValue);
-				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
+				startImageOpacities.Add(internetImages[i].color.a);
 			}
 
-
-			yield return null;
+			animateInternetOutTimeValue = 0;
+			animateInternetOutInit = false;
 		}
 
+		if (animateInternetOutTimeValue > 0 && animateInternetOutTimeValue < animateOutDuration)
+		{
+			float EvaluatedTimeValue = animateOutCurve.Evaluate(animateInternetOutTimeValue / animateOutDuration);
 
-		if(texts == internetTexts)
+			for (int i = 0; i < internetTexts.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], 0, EvaluatedTimeValue);
+				internetTexts[i].color = new Color(internetTexts[i].color.r, internetTexts[i].color.g, internetTexts[i].color.b, _newOpacity);
+			}
+			for (int i = 0; i < internetImages.Length; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], 0, EvaluatedTimeValue);
+				internetImages[i].color = new Color(internetImages[i].color.r, internetImages[i].color.g, internetImages[i].color.b, _newOpacity);
+			}
+		}
+		else if (animateInternetOutTimeValue > animateOutDuration)
 		{
 			onDeActivated.Invoke();
 			active = false;
+
+			animateInternetOutInit = true;
+			animateInternetOut = false;
+
 			sM.AddToGameState();
-			animateOutRoutine = null;
 			gameObject.SetActive(false);
 		}
-		else
-		{
-			privacyContainer.SetActive(false);
-			StartCoroutine(AnimateIn(internetTexts, internetImages, internetTextsOpacities, internetImagesOpacities, internetButton));
-			animateOutRoutine = null;
-		}
+
+		animateInternetOutTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateInternetOutTimeValue, 0, animateOutDuration + 0.01f);
 	}
 }

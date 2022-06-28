@@ -32,8 +32,9 @@ public class PlatformManager : MonoBehaviour
 
     private void Awake()
     {
-		#region Singleton
-		if (instance == null)
+        Application.targetFrameRate = 240;
+        #region Singleton
+        if (instance == null)
         {
             instance = this;
         }

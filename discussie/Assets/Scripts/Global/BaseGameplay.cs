@@ -13,6 +13,8 @@ public class BaseGameplay : MonoBehaviour
     [SerializeField] private UnityEvent onDeActivated;
 
     private Coroutine closeRoutine;
+    bool closeDown = false;
+    float closeDownTimer = 0;
 
     private SequenceManager sM;
 
@@ -23,18 +25,28 @@ public class BaseGameplay : MonoBehaviour
         onActivated.Invoke();
     }
 
-    public void StartCloseDown()
+	private void Update()
 	{
-        if(closeRoutine != null) { return; }
-        closeRoutine = StartCoroutine(CloseDown());
+        CloseDown();
     }
 
-    private IEnumerator CloseDown()
+    private void CloseDown()
+	{
+		if (!closeDown) { return; }
+
+        if(closeDownTimer >= endingGraceTime)
+		{
+            sM.AddToGameState();
+        }
+
+        closeDownTimer += Time.deltaTime;
+
+    }
+
+	public void StartCloseDown()
 	{
         onDeActivated.Invoke();
-        yield return new WaitForSeconds(endingGraceTime);
-        sM.AddToGameState();
-        //gameObject.SetActive(false);
+        closeDown = true;
     }
 
 }

@@ -9,9 +9,9 @@ PlayerSettings:
   AndroidFilterTouchesWhenObscured: 1
   AndroidEnableSustainedPerformanceMode: 0
   defaultScreenOrientation: 0
-  targetDevice: 2
+  targetDevice: 0
   useOnDemandResources: 0
-  accelerometerFrequency: 60
+  accelerometerFrequency: 0
   companyName: LeonardoDesign
   productName: "dis\xB7cus\xB7sie"
   defaultCursor: {fileID: 0}
@@ -136,7 +136,7 @@ PlayerSettings:
     16:10: 1
     16:9: 1
     Others: 1
-  bundleVersion: 1.0.0
+  bundleVersion: 1.2.0
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -159,10 +159,10 @@ PlayerSettings:
     iPhone: com.LeonardoDesign.discussie
   buildNumber:
     Standalone: 0
-    iPhone: 1
+    iPhone: 4
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
-  AndroidBundleVersionCode: 1
+  AndroidBundleVersionCode: 4
   AndroidMinSdkVersion: 22
   AndroidTargetSdkVersion: 0
   AndroidPreferredInstallLocation: 0
@@ -251,14 +251,14 @@ PlayerSettings:
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: C:/Users/leonv/Documents/Year4HKU/02_Afstuderen/Builds/uitzoeken/user.keystore
-  AndroidKeyaliasName: uitzoeken
+  AndroidKeyaliasName: discussie
   AndroidBuildApkPerCpuArchitecture: 0
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
   AndroidEnableTango: 0
   androidEnableBanner: 1
   androidUseLowAccuracyLocation: 0
-  androidUseCustomKeystore: 0
+  androidUseCustomKeystore: 1
   m_AndroidBanners:
   - width: 320
     height: 180
@@ -398,6 +398,48 @@ PlayerSettings:
   - m_BuildTarget: Android
     m_Icons:
     - m_Textures:
+      - {fileID: 2800000, guid: acd4bd74b9c933741a91a40f865274e6, type: 3}
+      - {fileID: 2800000, guid: 0d2dba197a883cf41a67806f658cb973, type: 3}
+      m_Width: 432
+      m_Height: 432
+      m_Kind: 2
+      m_SubKind: 
+    - m_Textures:
+      - {fileID: 2800000, guid: 4baef9f9ed1974849b9d6590c8c4d8f2, type: 3}
+      - {fileID: 2800000, guid: 718e0740a174c80418ccef254d4f1b2b, type: 3}
+      m_Width: 324
+      m_Height: 324
+      m_Kind: 2
+      m_SubKind: 
+    - m_Textures:
+      - {fileID: 2800000, guid: eea1557b17bcba64f8899445864e1dc0, type: 3}
+      - {fileID: 2800000, guid: 31e5b7736267c1d43bb966d4c8d6de21, type: 3}
+      m_Width: 216
+      m_Height: 216
+      m_Kind: 2
+      m_SubKind: 
+    - m_Textures:
+      - {fileID: 2800000, guid: ca605ca92d2bb4641be398bb7d73cccd, type: 3}
+      - {fileID: 2800000, guid: 017db0e4540e4754eb83897908621333, type: 3}
+      m_Width: 162
+      m_Height: 162
+      m_Kind: 2
+      m_SubKind: 
+    - m_Textures:
+      - {fileID: 2800000, guid: 510b8714c204f6741bf9fb165c7abd12, type: 3}
+      - {fileID: 2800000, guid: 5bf856841b9bf0d478fd8f6bbac0fcbd, type: 3}
+      m_Width: 108
+      m_Height: 108
+      m_Kind: 2
+      m_SubKind: 
+    - m_Textures:
+      - {fileID: 2800000, guid: 0f75df2a5d3ffd641bed270c7f90bd68, type: 3}
+      - {fileID: 2800000, guid: 20df6cbcec7cdff44b76344060c5c943, type: 3}
+      m_Width: 81
+      m_Height: 81
+      m_Kind: 2
+      m_SubKind: 
+    - m_Textures:
       - {fileID: 2800000, guid: 5a78df40c30be4d4aaf729ed67bf7206, type: 3}
       m_Width: 192
       m_Height: 192
@@ -468,48 +510,6 @@ PlayerSettings:
       m_Width: 36
       m_Height: 36
       m_Kind: 0
-      m_SubKind: 
-    - m_Textures:
-      - {fileID: 2800000, guid: acd4bd74b9c933741a91a40f865274e6, type: 3}
-      - {fileID: 2800000, guid: 0d2dba197a883cf41a67806f658cb973, type: 3}
-      m_Width: 432
-      m_Height: 432
-      m_Kind: 2
-      m_SubKind: 
-    - m_Textures:
-      - {fileID: 2800000, guid: 4baef9f9ed1974849b9d6590c8c4d8f2, type: 3}
-      - {fileID: 2800000, guid: 718e0740a174c80418ccef254d4f1b2b, type: 3}
-      m_Width: 324
-      m_Height: 324
-      m_Kind: 2
-      m_SubKind: 
-    - m_Textures:
-      - {fileID: 2800000, guid: eea1557b17bcba64f8899445864e1dc0, type: 3}
-      - {fileID: 2800000, guid: 31e5b7736267c1d43bb966d4c8d6de21, type: 3}
-      m_Width: 216
-      m_Height: 216
-      m_Kind: 2
-      m_SubKind: 
-    - m_Textures:
-      - {fileID: 2800000, guid: ca605ca92d2bb4641be398bb7d73cccd, type: 3}
-      - {fileID: 2800000, guid: 017db0e4540e4754eb83897908621333, type: 3}
-      m_Width: 162
-      m_Height: 162
-      m_Kind: 2
-      m_SubKind: 
-    - m_Textures:
-      - {fileID: 2800000, guid: 510b8714c204f6741bf9fb165c7abd12, type: 3}
-      - {fileID: 2800000, guid: 5bf856841b9bf0d478fd8f6bbac0fcbd, type: 3}
-      m_Width: 108
-      m_Height: 108
-      m_Kind: 2
-      m_SubKind: 
-    - m_Textures:
-      - {fileID: 2800000, guid: 0f75df2a5d3ffd641bed270c7f90bd68, type: 3}
-      - {fileID: 2800000, guid: 20df6cbcec7cdff44b76344060c5c943, type: 3}
-      m_Width: 81
-      m_Height: 81
-      m_Kind: 2
       m_SubKind: 
   m_BuildTargetBatching:
   - m_BuildTarget: Standalone
@@ -854,7 +854,7 @@ PlayerSettings:
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
-    Android: 0
+    Android: 1
   il2cppCompilerConfiguration: {}
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}

@@ -167,12 +167,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a839665feba70c43a2a19375b911279, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  game: 2
+  game: 1
   isPersonal: 1
-  definition: Een gesprek tussen pertijen van met verschillende meningen waarbij
-    ze elkaar hun eigen standpunt proberen aan te leren door middel van argumenten
-  source: Elly
+  definition: 'meegaan in een bestaand gedragspatroon
+
+    falling in line
+
+    zich
+    aanpassen aan'
+  source: M. T
   initialRating: {x: 0, y: 0}
-  location: Andere Plek
+  location: andere plek
   privacy: 1
-  gameResult: Test
+  gameResult: FF46DEkFFC0F4kFFFFFFt34

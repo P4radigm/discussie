@@ -37,19 +37,39 @@ public class BaseMenu : MonoBehaviour
 	[Space(40)]
 	[SerializeField] private float fadeInDuration;
 	[SerializeField] private AnimationCurve fadeInCurve;
-	private Coroutine fadeInRoutine;
+	private bool animateFadeInInit = true;
+	private bool animateFadeIn = false;
+	private float animateFadeInTimeValue = 0;
+	private List<float> startTextOpacities = new();
+	private List<float> startImageOpacities = new();
+
 	[SerializeField] private float fadeOutDuration;
 	[SerializeField] private AnimationCurve fadeOutCurve;
-	private Coroutine fadeOutRoutine;
+	private bool animateFadeOutInit = true;
+	private bool animateFadeOut = false;
+	private float animateFadeOutTimeValue = 0;
 	[Space(20)]
 	[SerializeField] private float positionChangeDuration;
 	[SerializeField] private AnimationCurve positionChangeCurve;
-	private Coroutine positionChangeRoutine;
+	private bool animatePositionInit = true;
+	private bool animatePosition = false;
+	private float animatePositionTimeValue = 0;
+	private Vector2 oldPosition;
+	private Vector2 targetPosition;
 	[Space(20)]
 	[SerializeField] private float buttonChangeDuration;
 	[SerializeField] private AnimationCurve buttonChangeCurve;
 	[SerializeField] private float backgroundImageOpacity;
 	[SerializeField] private float textOpacity;
+	private bool animateChangeButtonInit = true;
+	private bool animateChangeButton = false;
+	private float animateChangeButtonTimeValue = 0;
+	private Button newButton;
+	private List<TextMeshProUGUI> newButtonTexts = new();
+	private List<Image> newButtonImages = new();
+	private Button oldButton;
+	private List<TextMeshProUGUI> oldButtonTexts = new();
+	private List<Image> oldButtonImages = new();
 	[Space(20)]
 	[SerializeField] private List<TextMeshProUGUI> filteredOutTexts;
 	[SerializeField] private List<Image> filteredOutImages;
@@ -96,58 +116,88 @@ public class BaseMenu : MonoBehaviour
 		onActivated.Invoke();
 
 		//Animate in
-		if (fadeInRoutine == null)
-		{
-			fadeInRoutine = StartCoroutine(AnimateIn());
-		}
+		if (animateFadeOut) { animateFadeOut = false; animateFadeOutInit = true; }
+		animateFadeIn = true;
+	}
+
+	private void Update()
+	{
+		AnimFadeIn();
+		AnimFadeOut();
+		AnimToMenuPosition();
+		AnimChangeButton();
 	}
 
 	public void PressArtist()
 	{
 		//Animate to artist screen
-		if(positionChangeRoutine == null) 
-		{
-			websiteButton.GetComponent<HintBlink>().Activate();
-			StartCoroutine(AnimateToMenuPosition(artistScreenPos));
-			StartCoroutine(AnimateChangeButton(artistMenuButton, artistButton));
-		}
+		if (animatePosition) { return; }
+
+		targetPosition = artistScreenPos;
+		animatePositionInit = true;
+		animatePosition = true;
+
+		websiteButton.GetComponent<HintBlink>().Activate();
+
+		oldButton = artistButton;
+		newButton = artistMenuButton;
+		animateChangeButtonInit = true;
+		animateChangeButton = true;
 	}
 
 	public void PressInfo()
 	{
 		//Animate to info screen
-		if (positionChangeRoutine == null)
-		{
-			sysOneButton.GetComponent<HintBlink>().Activate();
-			sysTwoButton.GetComponent<HintBlink>().Activate();
-			sysThreeButton.GetComponent<HintBlink>().Activate();
-			StartCoroutine(AnimateToMenuPosition(infoScreenPos));
-			StartCoroutine(AnimateChangeButton(infoMenuButton, infoButton));
-		}
+		if (animatePosition) { return; }
+
+		targetPosition = infoScreenPos;
+		animatePositionInit = true;
+		animatePosition = true;
+
+		sysOneButton.GetComponent<HintBlink>().Activate();
+		sysTwoButton.GetComponent<HintBlink>().Activate();
+		sysThreeButton.GetComponent<HintBlink>().Activate();
+
+		oldButton = infoButton;
+		newButton = infoMenuButton;
+		animateChangeButtonInit = true;
+		animateChangeButton = true;
 	}
 
 	public void PressMenuFromInfo()
 	{
+		if (animatePosition) { return; }
+
 		//Animate to menu screen
-		if (positionChangeRoutine == null)
-		{
-			sysOneButton.GetComponent<HintBlink>().DeActivate();
-			sysTwoButton.GetComponent<HintBlink>().DeActivate();
-			sysThreeButton.GetComponent<HintBlink>().DeActivate();
-			StartCoroutine(AnimateToMenuPosition(menuScreenPos));
-			StartCoroutine(AnimateChangeButton(infoButton, infoMenuButton));
-		}
+		targetPosition = menuScreenPos;
+		animatePositionInit = true;
+		animatePosition = true;
+
+		sysOneButton.GetComponent<HintBlink>().DeActivate();
+		sysTwoButton.GetComponent<HintBlink>().DeActivate();
+		sysThreeButton.GetComponent<HintBlink>().DeActivate();
+
+		oldButton = infoMenuButton;
+		newButton = infoButton;
+		animateChangeButtonInit = true;
+		animateChangeButton = true;
 	}
 
 	public void PressMenuFromArtist()
 	{
+		if (animatePosition) { return; }
+
 		//Animate to menu screen
-		if (positionChangeRoutine == null)
-		{
-			websiteButton.GetComponent<HintBlink>().DeActivate();
-			StartCoroutine(AnimateToMenuPosition(menuScreenPos));
-			StartCoroutine(AnimateChangeButton(artistButton, artistMenuButton));
-		}
+		targetPosition = menuScreenPos;
+		animatePositionInit = true;
+		animatePosition = true;
+
+		websiteButton.GetComponent<HintBlink>().DeActivate();
+
+		oldButton = artistMenuButton;
+		newButton = artistButton;
+		animateChangeButtonInit = true;
+		animateChangeButton = true;
 	}
 
 	public void PressStart()
@@ -156,10 +206,8 @@ public class BaseMenu : MonoBehaviour
 		raycaster.enabled = false;
 
 		//Animate out
-		if (fadeOutRoutine == null)
-		{
-			fadeOutRoutine = StartCoroutine(AnimateOut());
-		}
+		if (animateFadeIn) { animateFadeIn = false; animateFadeInInit = true; }
+		animateFadeOut = true;
 	}
 
 	public void PressWebsite()
@@ -186,165 +234,237 @@ public class BaseMenu : MonoBehaviour
 		Application.OpenURL(storelink);
 	}
 
-	private IEnumerator AnimateToMenuPosition(Vector2 newScreenPosition)
+	private void AnimToMenuPosition()
 	{
-		raycaster.enabled = false;
+		if (!animatePosition) { return; }
 
-		//Change anchoring, without moving the image
-		float currentLeftAnchoredPos = masterPivot.offsetMin.x;
-		float currentRightAnchoredPos = masterPivot.offsetMax.x;
-		//Get position
-		float TimeValueOut = 0;
-		while (TimeValueOut < 1)
+		if (animatePositionInit)
 		{
-			TimeValueOut += Time.deltaTime / positionChangeDuration;
-			float EvaluatedTimeValueOut = positionChangeCurve.Evaluate(TimeValueOut);
-			float NewLeftAnchoredPos = Mathf.Lerp(currentLeftAnchoredPos, newScreenPosition.x, EvaluatedTimeValueOut);
-			float NewRightAnchoredPos = Mathf.Lerp(currentRightAnchoredPos, newScreenPosition.y, EvaluatedTimeValueOut);
+			oldPosition = new Vector2(masterPivot.offsetMin.x, masterPivot.offsetMax.x);
+			raycaster.enabled = false;
+
+			animatePositionTimeValue = 0;
+			animatePositionInit = false;
+		}
+
+		if (animatePositionTimeValue > 0 && animatePositionTimeValue <= positionChangeDuration)
+		{
+			float EvaluatedTimeValue = positionChangeCurve.Evaluate(animatePositionTimeValue / positionChangeDuration);
+
+			float NewLeftAnchoredPos = Mathf.Lerp(oldPosition.x, targetPosition.x, EvaluatedTimeValue);
+			float NewRightAnchoredPos = Mathf.Lerp(oldPosition.y, targetPosition.y, EvaluatedTimeValue);
 
 			masterPivot.offsetMin = new Vector2(NewLeftAnchoredPos, masterPivot.offsetMin.y);
 			masterPivot.offsetMax = new Vector2(NewRightAnchoredPos, masterPivot.offsetMax.y);
 
-			yield return null;
 		}
-		raycaster.enabled = true;
-		positionChangeRoutine = null;
+		else if (animatePositionTimeValue > positionChangeDuration)
+		{
+			raycaster.enabled = true;
+			animatePositionInit = true;
+			animatePosition = false;
+		}
+
+		animatePositionTimeValue += Time.deltaTime;
+		Mathf.Clamp(animatePositionTimeValue, 0, positionChangeDuration + 0.01f);
+
 	}
 
-	private IEnumerator AnimateChangeButton(Button newButton, Button oldButton)
+	private void AnimChangeButton()
 	{
-		oldButton.interactable = false;
-		oldButton.GetComponent<HintBlink>().DeActivate();
-		TextMeshProUGUI[] newTexts = newButton.GetComponentsInChildren<TextMeshProUGUI>();
-		Image[] newTmages = newButton.GetComponentsInChildren<Image>();
-		Image newOwnImage = newButton.GetComponent<Image>();
-		TextMeshProUGUI[] oldTexts = oldButton.GetComponentsInChildren<TextMeshProUGUI>();
-		Image[] oldTmages = oldButton.GetComponentsInChildren<Image>();
-		Image oldOwnImage = oldButton.GetComponent<Image>();
-		oldOwnImage.raycastTarget = false;
-		newButton.gameObject.SetActive(true);
+		if (!animateChangeButton) { return; }
 
-		float TimeValueOut = 0;
-		while (TimeValueOut < 1)
+		if (animateChangeButtonInit)
 		{
-			TimeValueOut += Time.deltaTime / positionChangeDuration;
-			float EvaluatedTimeValueOut = positionChangeCurve.Evaluate(TimeValueOut);
-			
+			newButtonTexts.Clear();
+			newButtonImages.Clear();
+			oldButtonTexts.Clear();
+			oldButtonImages.Clear();
 
+			oldButton.interactable = false;
+			oldButton.GetComponent<HintBlink>().DeActivate();
+
+			TextMeshProUGUI[] newTexts = newButton.GetComponentsInChildren<TextMeshProUGUI>();
+			Image[] newTmages = newButton.GetComponentsInChildren<Image>();
+			Image newOwnImage = newButton.GetComponent<Image>();
 			for (int i = 0; i < newTexts.Length; i++)
 			{
-				newTexts[i].color = new Color(newTexts[i].color.r, newTexts[i].color.g, newTexts[i].color.b, EvaluatedTimeValueOut * textOpacity);
+				newButtonTexts.Add(newTexts[i]);
 			}
 			for (int i = 0; i < newTmages.Length; i++)
 			{
-				if(newTmages[i] != newOwnImage) { newTmages[i].color = new Color(newTmages[i].color.r, newTmages[i].color.g, newTmages[i].color.b, EvaluatedTimeValueOut * backgroundImageOpacity); }
+				if (newTmages[i] != newOwnImage) { newButtonImages.Add(newTmages[i]); }
 			}
+
+			TextMeshProUGUI[] oldTexts = oldButton.GetComponentsInChildren<TextMeshProUGUI>();
+			Image[] oldTmages = oldButton.GetComponentsInChildren<Image>();
+			Image oldOwnImage = oldButton.GetComponent<Image>();
 			for (int i = 0; i < oldTexts.Length; i++)
 			{
-				oldTexts[i].color = new Color(oldTexts[i].color.r, oldTexts[i].color.g, oldTexts[i].color.b, (1 - EvaluatedTimeValueOut) * textOpacity);
+				oldButtonTexts.Add(oldTexts[i]);
 			}
 			for (int i = 0; i < oldTmages.Length; i++)
 			{
-				if (oldTmages[i] != oldOwnImage) { oldTmages[i].color = new Color(oldTmages[i].color.r, oldTmages[i].color.g, oldTmages[i].color.b, (1 - EvaluatedTimeValueOut) * backgroundImageOpacity); }
+				if (oldTmages[i] != oldOwnImage) { oldButtonImages.Add(oldTmages[i]); }
+			}
+			oldOwnImage.raycastTarget = false;
+			newButton.gameObject.SetActive(true);
+
+			animateChangeButtonTimeValue = 0;
+			animateChangeButtonInit = false;
+		}
+
+		if(animateChangeButtonTimeValue > 0 && animateChangeButtonTimeValue <= buttonChangeDuration)
+		{
+			float EvaluatedTimeValue = buttonChangeCurve.Evaluate(animateChangeButtonTimeValue / buttonChangeDuration);
+
+			for (int i = 0; i < newButtonTexts.Count; i++)
+			{
+				newButtonTexts[i].color = new Color(newButtonTexts[i].color.r, newButtonTexts[i].color.g, newButtonTexts[i].color.b, EvaluatedTimeValue * textOpacity);
+			}
+			for (int i = 0; i < newButtonImages.Count; i++)
+			{
+				newButtonImages[i].color = new Color(newButtonImages[i].color.r, newButtonImages[i].color.g, newButtonImages[i].color.b, EvaluatedTimeValue * backgroundImageOpacity);
+			}
+			for (int i = 0; i < oldButtonTexts.Count; i++)
+			{
+				oldButtonTexts[i].color = new Color(oldButtonTexts[i].color.r, oldButtonTexts[i].color.g, oldButtonTexts[i].color.b, (1 - EvaluatedTimeValue) * textOpacity);
+			}
+			for (int i = 0; i < oldButtonImages.Count; i++)
+			{
+				oldButtonImages[i].color = new Color(oldButtonImages[i].color.r, oldButtonImages[i].color.g, oldButtonImages[i].color.b, (1 - EvaluatedTimeValue) * backgroundImageOpacity);
 			}
 
-			yield return null;
 		}
-		newButton.interactable = true;
-		newOwnImage.raycastTarget = true;
-		newButton.GetComponent<HintBlink>().Activate();
-		oldButton.gameObject.SetActive(false);
+		else if (animateChangeButtonTimeValue > buttonChangeDuration)
+		{
+			newButton.interactable = true;
+			newButton.GetComponent<Image>().raycastTarget = true;
+			newButton.GetComponent<HintBlink>().Activate();
+			oldButton.gameObject.SetActive(false);
+
+			animateChangeButtonInit = true;
+			animateChangeButton = false;
+		}
+
+		animateChangeButtonTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateChangeButtonTimeValue, 0, buttonChangeDuration + 0.01f);
 	}
 
-	private IEnumerator AnimateIn()
+	private void AnimFadeIn()
 	{
-		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Count];
-		for (int i = 0; i < texts.Count; i++)
-		{
-			_startTextOpacities[i] = texts[i].color.a;
-		}
-		float[] _startImageOpacities = new float[images.Count];
-		for (int i = 0; i < images.Count; i++)
-		{
-			_startImageOpacities[i] = images[i].color.a;
-		}
+		if(!animateFadeIn) { return; }
 
-		while (_timeValue < 1)
+		if (animateFadeInInit)
 		{
-			_timeValue += Time.deltaTime / fadeInDuration;
-			float _evaluatedTimeValue = fadeInCurve.Evaluate(_timeValue);
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
 
 			for (int i = 0; i < texts.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], textsOpacities[i], _evaluatedTimeValue);
+				startTextOpacities.Add(texts[i].color.a);
+			}
+			for (int i = 0; i < images.Count; i++)
+			{
+				startImageOpacities.Add(images[i].color.a);
+			}
+
+			animateFadeInTimeValue = 0;
+			animateFadeInInit = false;
+		}
+
+		if(animateFadeInTimeValue > 0 && animateFadeInTimeValue <= fadeInDuration)
+		{
+			float EvaluatedTimeValue = fadeInCurve.Evaluate(animateFadeInTimeValue / fadeInDuration);
+
+			for (int i = 0; i < texts.Count; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], textsOpacities[i], EvaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
 			for (int i = 0; i < images.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], imagesOpacities[i], _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], imagesOpacities[i], EvaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
-
-
-			yield return null;
 		}
-		onAnimatedIn.Invoke();
-		raycaster.enabled = true;
-		fadeInRoutine = null;
-		startButton.GetComponent<HintBlink>().Activate();
-		infoButton.GetComponent<HintBlink>().Activate();
-		artistButton.GetComponent<HintBlink>().Activate();
+		else if(animateFadeInTimeValue > fadeInDuration)
+		{
+			onAnimatedIn.Invoke();
+			raycaster.enabled = true;
+			startButton.GetComponent<HintBlink>().Activate();
+			infoButton.GetComponent<HintBlink>().Activate();
+			artistButton.GetComponent<HintBlink>().Activate();
+
+			animateFadeInInit = true;
+			animateFadeIn = false;
+		}
+
+		animateFadeInTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateFadeInTimeValue, 0, fadeInDuration + 0.01f);
 	}
 
-	private IEnumerator AnimateOut()
+	private void AnimFadeOut()
 	{
-		for (int i = 0; i < filteredOutTexts.Count; i++)
-		{
-			texts.Add(filteredOutTexts[i]);
-		}
-		for (int i = 0; i < filteredOutImages.Count; i++)
-		{
-			images.Add(filteredOutImages[i]);
-		}
-		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Count];
-		for (int i = 0; i < texts.Count; i++)
-		{
-			_startTextOpacities[i] = texts[i].color.a;
-		}
-		float[] _startImageOpacities = new float[images.Count];
-		for (int i = 0; i < images.Count; i++)
-		{
-			_startImageOpacities[i] = images[i].color.a;
-		}
+		if (!animateFadeOut) { return; }
 
-		while (_timeValue < 1)
+		if (animateFadeOutInit)
 		{
-			_timeValue += Time.deltaTime / fadeOutDuration;
-			float _evaluatedTimeValue = fadeOutCurve.Evaluate(_timeValue);
+			for (int i = 0; i < filteredOutTexts.Count; i++)
+			{
+				texts.Add(filteredOutTexts[i]);
+			}
+			for (int i = 0; i < filteredOutImages.Count; i++)
+			{
+				images.Add(filteredOutImages[i]);
+			}
+
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
 
 			for (int i = 0; i < texts.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 0, _evaluatedTimeValue);
+				startTextOpacities.Add(texts[i].color.a);
+			}
+			for (int i = 0; i < images.Count; i++)
+			{
+				startImageOpacities.Add(images[i].color.a);
+			}
+
+			animateFadeOutTimeValue = 0;
+			animateFadeOutInit = false;
+		}
+
+		if (animateFadeOutTimeValue > 0 && animateFadeOutTimeValue <= fadeOutDuration)
+		{
+			float EvaluatedTimeValue = fadeOutCurve.Evaluate(animateFadeOutTimeValue / fadeOutDuration);
+
+			for (int i = 0; i < texts.Count; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], 0, EvaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
 			for (int i = 0; i < images.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 0, _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], 0, EvaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
-
-
-			yield return null;
 		}
-		onDeActivated.Invoke();
-		sM.AddToGameState();
-		startButton.GetComponent<HintBlink>().DeActivate();
-		infoButton.GetComponent<HintBlink>().DeActivate();
-		artistButton.GetComponent<HintBlink>().DeActivate();
-		artistMenuButton.GetComponent<HintBlink>().DeActivate();
-		infoMenuButton.GetComponent<HintBlink>().DeActivate();
-		fadeOutRoutine = null;
+		else if (animateFadeOutTimeValue > fadeOutDuration)
+		{
+			onDeActivated.Invoke();
+			startButton.GetComponent<HintBlink>().DeActivate();
+			infoButton.GetComponent<HintBlink>().DeActivate();
+			artistButton.GetComponent<HintBlink>().DeActivate();
+			artistMenuButton.GetComponent<HintBlink>().DeActivate();
+			infoMenuButton.GetComponent<HintBlink>().DeActivate();
+			sM.AddToGameState();
+
+			animateFadeInInit = true;
+			animateFadeIn = false;
+		}
+
+		animateFadeOutTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateFadeOutTimeValue, 0, fadeOutDuration + 0.01f);
 	}
 }

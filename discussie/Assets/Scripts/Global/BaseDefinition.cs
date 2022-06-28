@@ -28,15 +28,26 @@ public class BaseDefinition : MonoBehaviour
 	[Space(10)]
 	public float animateInDuration;
 	public AnimationCurve animateInCurve;
-	private Coroutine animateInRoutine;	
+	//private Coroutine animateInRoutine;	
 	public float animateOutDuration;
 	public AnimationCurve animateOutCurve;
-	private Coroutine animateOutRoutine;
+	//private Coroutine animateOutRoutine;
 	[SerializeField] private float continueSeconds;
 	[NonReorderable]
 	[SerializeField] private List<TextMeshProUGUI> filteredOutTexts;
 	[NonReorderable]
 	[SerializeField] private List<Image> filteredOutImages;
+
+	private bool animateInInit = true;
+	private bool animateIn = false;
+	private float animateInTimeValue = 0;
+
+	private bool animateOutInit = true;
+	private bool animateOut = false;
+	private float animateOutTimeValue = 0;
+
+	private List<float> startTextOpacities = new();
+	private List<float> startImageOpacities = new();
 
 	private SequenceManager sM;
 
@@ -72,20 +83,16 @@ public class BaseDefinition : MonoBehaviour
 			images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, 0);
 		}
 
+		onActivated.Invoke();
+
 		//Animate in
-		if(animateInRoutine == null)
-		{
-			animateInRoutine = StartCoroutine(AnimateIn());
-		}
+		animateIn = true;
 	}
 
 	public void CloseDown()
 	{
 		//Animate out
-		if (animateOutRoutine == null)
-		{
-			animateOutRoutine = StartCoroutine(AnimateOut());
-		}
+		animateOut = true;
 	}
 
 	public void TryUploadA()
@@ -129,89 +136,112 @@ public class BaseDefinition : MonoBehaviour
 
 	private void Update()
 	{
-		if(!active) { return; }
-		//Animate blinking stuff
+		AnimIn();
+		AnimOut();
 	}
 
-	private IEnumerator AnimateIn()
+	private void AnimIn()
 	{
-		onActivated.Invoke();
-		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Count];
-		for (int i = 0; i < texts.Count; i++)
-		{
-			_startTextOpacities[i] = texts[i].color.a;
-		}
-		float[] _startImageOpacities = new float[images.Count];
-		for (int i = 0; i < images.Count; i++)
-		{
-			_startImageOpacities[i] = images[i].color.a;
-		}
+		if (!animateIn) { return; }
 
-		while (_timeValue < 1)
+		if (animateInInit)
 		{
-			_timeValue += Time.deltaTime / animateInDuration;
-			float _evaluatedTimeValue = animateInCurve.Evaluate(_timeValue);
+
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
 
 			for (int i = 0; i < texts.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], textsOpacities[i], _evaluatedTimeValue);
+				startTextOpacities.Add(texts[i].color.a);
+			}
+			for (int i = 0; i < images.Count; i++)
+			{
+				startImageOpacities.Add(images[i].color.a);
+			}
+
+			animateInTimeValue = 0;
+			animateInInit = false;
+		}
+
+		if (animateInTimeValue > 0 && animateInTimeValue < animateInDuration)
+		{
+			float EvaluatedTimeValue = animateInCurve.Evaluate(animateInTimeValue / animateInDuration);
+
+			for (int i = 0; i < texts.Count; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], textsOpacities[i], EvaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
 			for (int i = 0; i < images.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], imagesOpacities[i], _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], imagesOpacities[i], EvaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
-
-
-			yield return null;
 		}
-		onAnimatedIn.Invoke();
-		active = true;
-		yield return new WaitForSeconds(continueSeconds);
-		animateInRoutine = null;
+		else if (animateInTimeValue > animateInDuration)
+		{
+			onAnimatedIn.Invoke();
+			active = true;
+
+			animateInInit = true;
+			animateIn = false;
+		}
+
+		animateInTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateInTimeValue, 0, animateInDuration + 0.01f);
 	}
 
-	private IEnumerator AnimateOut()
+	private void AnimOut()
 	{
-		onAnimateOut.Invoke();
-		float _timeValue = 0;
-		float[] _startTextOpacities = new float[texts.Count];
-		for (int i = 0; i < texts.Count; i++)
-		{
-			_startTextOpacities[i] = texts[i].color.a;
-		}
-		float[] _startImageOpacities = new float[images.Count];
-		for (int i = 0; i < images.Count; i++)
-		{
-			_startImageOpacities[i] = images[i].color.a;
-		}
+		if (!animateOut) { return; }
 
-		while (_timeValue < 1)
+		if (animateOutInit)
 		{
-			_timeValue += Time.deltaTime / animateOutDuration;
-			float _evaluatedTimeValue = animateOutCurve.Evaluate(_timeValue);
+			onAnimateOut.Invoke();
+
+			startTextOpacities.Clear();
+			startImageOpacities.Clear();
 
 			for (int i = 0; i < texts.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startTextOpacities[i], 0, _evaluatedTimeValue);
+				startTextOpacities.Add(texts[i].color.a);
+			}
+			for (int i = 0; i < images.Count; i++)
+			{
+				startImageOpacities.Add(images[i].color.a);
+			}
+
+			animateOutTimeValue = 0;
+			animateOutInit = false;
+		}
+
+		if (animateOutTimeValue > 0 && animateOutTimeValue < animateOutDuration)
+		{
+			float EvaluatedTimeValue = animateOutCurve.Evaluate(animateOutTimeValue / animateOutDuration);
+
+			for (int i = 0; i < texts.Count; i++)
+			{
+				float _newOpacity = Mathf.Lerp(startTextOpacities[i], 0, EvaluatedTimeValue);
 				texts[i].color = new Color(texts[i].color.r, texts[i].color.g, texts[i].color.b, _newOpacity);
 			}
 			for (int i = 0; i < images.Count; i++)
 			{
-				float _newOpacity = Mathf.Lerp(_startImageOpacities[i], 0, _evaluatedTimeValue);
+				float _newOpacity = Mathf.Lerp(startImageOpacities[i], 0, EvaluatedTimeValue);
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
-
-
-			yield return null;
 		}
-		onDeActivated.Invoke();
-		active = false;
-		sM.AddToGameState();
-		animateOutRoutine = null;
-		gameObject.SetActive(false);
-	}
+		else if (animateOutTimeValue > animateOutDuration)
+		{
+			onDeActivated.Invoke();
+			active = false;
 
+			animateInInit = true;
+			animateIn = false;
+			sM.AddToGameState();
+			gameObject.SetActive(false);
+		}
+
+		animateOutTimeValue += Time.deltaTime;
+		Mathf.Clamp(animateOutTimeValue, 0, animateOutDuration + 0.01f);
+	}
 }
