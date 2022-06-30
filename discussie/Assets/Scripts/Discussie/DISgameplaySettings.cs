@@ -92,9 +92,15 @@ public class DISgameplaySettings : MonoBehaviour
 	[SerializeField] private float elementHeightAtScale1;
 	[HideInInspector] public float elementHeight;
 	[HideInInspector] public float elementScale;
+	[Space(10)]
 	public float horizontalDistanceBetweeenElements;
+	public float extraSidePadding;
+	public float extraVertPadding;
+	public float extraConstructionPadding;
+	[Space(10)]
 	public float minVerticalDistanceBetweeenElements;
 	public float comfyVerticalDistanceBetweeenElements;
+	[Space(10)]
 	public float minVerticalConstructionSpacePadding;
 	public float comfyVerticalConstructionSpacePadding;
 
@@ -114,7 +120,7 @@ public class DISgameplaySettings : MonoBehaviour
 	//Element behaviour settings
 	private void Awake()
 	{
-		if (scrollEnabled) { elementsPerLine = 7; }
+		if (scrollEnabled) { elementsPerLine = 9; }
 	}
 
 	public void StartUp()
@@ -131,10 +137,10 @@ public class DISgameplaySettings : MonoBehaviour
 	private void AdjustMeasurementsForScreenAspect()
 	{
 		int amountOfPositions = elementsPerLine;
-		if (scrollEnabled) { amountOfPositions = 3; }
+		if (scrollEnabled) { amountOfPositions = 4; }
 		//Scale adjustments based on screen aspect ratio (vertical screen world space), elementWidth & elementHeight
-		float horizontalWorldScreenDistance = platformManager.WorldScreenBotRightCoords.x - platformManager.WorldScreenBotLeftCoords.x;
-		elementWidth = (horizontalWorldScreenDistance - (horizontalDistanceBetweeenElements * ((float)amountOfPositions + 2f))) / amountOfPositions; //4.6 - (0 * (3-1) / 3)
+		float horizontalWorldScreenDistance =Mathf.Abs(platformManager.WorldScreenBotRightCoords.x) + Mathf.Abs(platformManager.WorldScreenBotLeftCoords.x) - extraSidePadding * 2f;
+		elementWidth = ((horizontalWorldScreenDistance) - (horizontalDistanceBetweeenElements * ((float)amountOfPositions + 2f))) / (float)amountOfPositions; //4.6 - (0 * (3-1) / 3)
 		Debug.Log($"SET: elementWidth = {elementWidth}");
 		elementScale = elementWidth / elementWidthAtScale1;
 		Debug.Log($"SET: elementScale = {elementScale}");
@@ -155,13 +161,17 @@ public class DISgameplaySettings : MonoBehaviour
 		// \- [] - [] - [] - [0] - [] - [] - [] -/
 		// \- [] - [] - [] - 0 - [] - [] - [] -/
 		int amountOfPositions = elementsPerLine;
-		if (scrollEnabled) { amountOfPositions = 7; }
-
-		float startingXpos = 0 - Mathf.FloorToInt(amountOfPositions / 2) * elementWidth - Mathf.FloorToInt((amountOfPositions + 2f) / 2) * horizontalDistanceBetweeenElements;
-		if(elementsPerLine % 2 == 0)
+		if (scrollEnabled) { amountOfPositions = 10; }
+		
+		float startingXpos = 0; 
+		if(amountOfPositions % 2 == 0)
 		{
 			//elements per line is even, so centered differently
-			startingXpos = 0 - Mathf.FloorToInt(amountOfPositions / 2) * elementWidth + elementWidth / 2f - (Mathf.FloorToInt(amountOfPositions / 2) + 2f) * horizontalDistanceBetweeenElements + horizontalDistanceBetweeenElements / 2f;
+			startingXpos = 0 - ((float)amountOfPositions / 2f + 0.5f) * horizontalDistanceBetweeenElements - ((float)amountOfPositions / 2f - 0.5f) * (elementWidth);
+		}
+		else
+		{
+			startingXpos = 0 - Mathf.FloorToInt(amountOfPositions / 2f) * elementWidth - Mathf.FloorToInt((amountOfPositions + 2f) / 2f) * horizontalDistanceBetweeenElements;
 		}
 
 		for (int i = 0; i < amountOfPositions; i++)
@@ -200,15 +210,15 @@ public class DISgameplaySettings : MonoBehaviour
 		{
 			//Two colour mode, construction area centred between lines
 			//Check if minimum height for everything even fits
-			float availableScreenSize = platformManager.WorldScreenTopLeftCoords.y - platformManager.WorldScreenBotLeftCoords.y;
-			if((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements + 2f * minVerticalConstructionSpacePadding > availableScreenSize)
+			float availableScreenSize = platformManager.WorldScreenTopLeftCoords.y - platformManager.WorldScreenBotLeftCoords.y - 2f * extraVertPadding;
+			if((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements + 2f * minVerticalConstructionSpacePadding + 2f * extraConstructionPadding > availableScreenSize)
 			{
 				Debug.LogWarning("Cannot fit requested amount of lines of elements within the vertical screen area");
 			}
-			float extraVerticalSpace = availableScreenSize - ((topLines + bottomLines + 1f) * elementHeight) - (2f * minVerticalConstructionSpacePadding) - (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements;
+			float extraVerticalSpace = availableScreenSize - ((topLines + bottomLines + 1f) * elementHeight) - (2f * minVerticalConstructionSpacePadding + 2f * extraConstructionPadding) - (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements;
 			float adjustedVerticalSpaceBetweenElements = minVerticalDistanceBetweeenElements + (extraVerticalSpace / (2f + topLines + bottomLines + 3f));
 			float adjustedVerticalConstructionSpacePadding = minVerticalConstructionSpacePadding + (extraVerticalSpace / (2f + topLines + bottomLines + 3f));
-			float yPosForCalc = platformManager.WorldScreenBotLeftCoords.y;
+			float yPosForCalc = platformManager.WorldScreenBotLeftCoords.y + extraVertPadding;
 			for (int i = 0; i < bottomLines; i++)
 			{
 				if(i == 0)
@@ -221,6 +231,7 @@ public class DISgameplaySettings : MonoBehaviour
 				yPosForCalc += elementHeight / 2f;
 			}
 			yPosForCalc += adjustedVerticalSpaceBetweenElements;
+			yPosForCalc += extraConstructionPadding;
 			yBotEdgeConstruction = yPosForCalc;
 			yPosForCalc += adjustedVerticalConstructionSpacePadding / 2f;
 			yBotLine = yPosForCalc;
@@ -232,6 +243,7 @@ public class DISgameplaySettings : MonoBehaviour
 			yTopLine = yPosForCalc;
 			yPosForCalc += adjustedVerticalConstructionSpacePadding / 2f;
 			yTopEdgeConstruction = yPosForCalc;
+			yPosForCalc += extraConstructionPadding;
 			yPosForCalc += adjustedVerticalSpaceBetweenElements;
 			for (int i = 0; i < topLines; i++)
 			{
@@ -246,18 +258,18 @@ public class DISgameplaySettings : MonoBehaviour
 		else if(topLines == 0)
 		{
 			//Calc lines from bottom to top, construction area topping the lines
-			float availableScreenSize = platformManager.WorldScreenTopLeftCoords.y - platformManager.WorldScreenBotLeftCoords.y;
-			if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements + 2f * minVerticalConstructionSpacePadding > availableScreenSize)
+			float availableScreenSize = platformManager.WorldScreenTopLeftCoords.y - platformManager.WorldScreenBotLeftCoords.y - 2 * extraVertPadding;
+			if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements + 2f * minVerticalConstructionSpacePadding + 2f * extraConstructionPadding > availableScreenSize)
 			{
-				Debug.LogError($"Cannot fit requested amount of lines of elements ({elementHeight}) within the vertical screen area ({availableScreenSize}) with minimum spacing");
+				Debug.LogWarning($"Cannot fit requested amount of lines of elements ({elementHeight}) within the vertical screen area ({availableScreenSize}) with minimum spacing");
 			}
-			else if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * comfyVerticalDistanceBetweeenElements + 2f * comfyVerticalConstructionSpacePadding > availableScreenSize)
+			else if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * comfyVerticalDistanceBetweeenElements + 2f * comfyVerticalConstructionSpacePadding + 2f * extraConstructionPadding > availableScreenSize)
 			{
-				Debug.LogError($"Cannot fit requested amount of lines of elements ({elementHeight}) within the vertical screen area ({availableScreenSize}) with comfy spacing");
+				Debug.LogWarning($"Cannot fit requested amount of lines of elements ({elementHeight}) within the vertical screen area ({availableScreenSize}) with comfy spacing");
 			}
 			else
 			{
-				float yPosForCalc = platformManager.WorldScreenBotLeftCoords.y;
+				float yPosForCalc = platformManager.WorldScreenBotLeftCoords.y + extraVertPadding;
 				for (int i = 0; i < bottomLines; i++)
 				{
 					if (i == 0)
@@ -270,6 +282,7 @@ public class DISgameplaySettings : MonoBehaviour
 					yPosForCalc += elementHeight / 2f;
 				}
 				yPosForCalc += comfyVerticalDistanceBetweeenElements;
+				yPosForCalc += extraConstructionPadding;
 				yBotEdgeConstruction = yPosForCalc;
 				yPosForCalc += comfyVerticalConstructionSpacePadding / 2f;
 				yBotLine = yPosForCalc;
@@ -281,6 +294,7 @@ public class DISgameplaySettings : MonoBehaviour
 				yTopLine = yPosForCalc;
 				yPosForCalc += comfyVerticalConstructionSpacePadding / 2f;
 				yTopEdgeConstruction = yPosForCalc;
+				yPosForCalc += extraConstructionPadding;
 				return;
 			}
 
@@ -297,6 +311,7 @@ public class DISgameplaySettings : MonoBehaviour
 				yPosForCalcMin += elementHeight / 2f;
 			}
 			yPosForCalcMin += minVerticalDistanceBetweeenElements;
+			yPosForCalcMin += extraConstructionPadding;
 			yBotEdgeConstruction = yPosForCalcMin;
 			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
 			yBotLine = yPosForCalcMin;
@@ -305,27 +320,28 @@ public class DISgameplaySettings : MonoBehaviour
 			yPosConstruction = yPosForCalcMin;
 			yPosForCalcMin += elementHeight / 2f;
 			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
-			yBotLine = yPosForCalcMin;
+			yTopLine = yPosForCalcMin;
 			yPosForCalcMin += minVerticalConstructionSpacePadding / 2f;
 			yTopEdgeConstruction = yPosForCalcMin;
+			yPosForCalcMin += extraConstructionPadding;
 
 			//List bot to top Botlines (toplines don't exist)
 		}
 		else
 		{
 			//Calc lines from top to bottom, construction area below the lines
-			float availableScreenSize = platformManager.WorldScreenTopLeftCoords.y - platformManager.WorldScreenBotLeftCoords.y;
-			if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements + 2f * minVerticalConstructionSpacePadding > availableScreenSize)
+			float availableScreenSize = platformManager.WorldScreenTopLeftCoords.y - platformManager.WorldScreenBotLeftCoords.y - 2 * extraVertPadding;
+			if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * minVerticalDistanceBetweeenElements + 2f * minVerticalConstructionSpacePadding + 2f * extraConstructionPadding > availableScreenSize)
 			{
 				Debug.LogWarning("Cannot fit requested amount of lines of elements within the vertical screen area with minimum spacing");
 			}
-			else if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * comfyVerticalDistanceBetweeenElements + 2f * comfyVerticalConstructionSpacePadding > availableScreenSize)
+			else if ((topLines + bottomLines + 1f) * elementHeight + (topLines + bottomLines + 3f) * comfyVerticalDistanceBetweeenElements + 2f * comfyVerticalConstructionSpacePadding + 2f * extraConstructionPadding > availableScreenSize)
 			{
 				Debug.LogWarning("Cannot fit requested amount of lines of elements within the vertical screen area with comfy spacing");
 			}
 			else
 			{
-				float yPosForCalc = platformManager.WorldScreenTopLeftCoords.y;
+				float yPosForCalc = platformManager.WorldScreenTopLeftCoords.y - extraVertPadding;
 				for (int i = 0; i < topLines; i++)
 				{
 					if (i == 0)
@@ -338,9 +354,10 @@ public class DISgameplaySettings : MonoBehaviour
 					yPosForCalc -= elementHeight / 2f;
 				}
 				yPosForCalc -= comfyVerticalDistanceBetweeenElements;
+				yPosForCalc -= extraConstructionPadding;
 				yTopEdgeConstruction = yPosForCalc;
 				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
-				yBotLine = yPosForCalc;
+				yTopLine = yPosForCalc;
 				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
 				yPosForCalc -= elementHeight / 2f;
 				yPosConstruction = yPosForCalc;
@@ -349,6 +366,7 @@ public class DISgameplaySettings : MonoBehaviour
 				yBotLine = yPosForCalc;
 				yPosForCalc -= comfyVerticalConstructionSpacePadding / 2f;
 				yBotEdgeConstruction = yPosForCalc;
+				yPosForCalc -= extraConstructionPadding;
 				return;
 			}
 
@@ -365,9 +383,10 @@ public class DISgameplaySettings : MonoBehaviour
 				yPosForCalcMin -= elementHeight / 2f;
 			}
 			yPosForCalcMin -= minVerticalDistanceBetweeenElements;
+			yPosForCalcMin -= extraConstructionPadding;
 			yTopEdgeConstruction = yPosForCalcMin;
 			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
-			yBotLine = yPosForCalcMin;
+			yTopLine = yPosForCalcMin;
 			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
 			yPosForCalcMin -= elementHeight / 2f;
 			yPosConstruction = yPosForCalcMin;
@@ -376,6 +395,7 @@ public class DISgameplaySettings : MonoBehaviour
 			yBotLine = yPosForCalcMin;
 			yPosForCalcMin -= minVerticalConstructionSpacePadding / 2f;
 			yBotEdgeConstruction = yPosForCalcMin;
+			yPosForCalcMin -= extraConstructionPadding;
 		}
 
 		//List top to bot Toplines (botlines don't exist)

@@ -52,18 +52,24 @@ public class SequenceManager : MonoBehaviour
     [SerializeField] private BaseGameplay baseGameplayC;
     [SerializeField] private BaseInputDefinition baseInput;
     [SerializeField] private BaseEnd baseEnd;
+    [Space(20)]
+    public bool isPhysicalDeploy;
+    [SerializeField] private string physicalDeployLocation;
     [Header("To Get")]
     public GameStates currentGamestate;
     private ContinuityManager cM;
+    private DataManager dM;
+
 
 
     void Start()
     {
-        if (ContinuityManager.instance != null) 
+        if (ContinuityManager.instance != null)
         {
             cM = ContinuityManager.instance;
             if (cM.hasBeenToMenu) { currentGamestate = GameStates.menu; }
-        }		
+        }
+        dM = DataManager.instance;
     }
 
     void Update()
@@ -113,7 +119,20 @@ public class SequenceManager : MonoBehaviour
                 }
                 break;
             case GameStates.location:
-                if (baseLocation.gameObject.activeInHierarchy == false)
+                if (baseLocation.gameObject.activeInHierarchy == false && !isPhysicalDeploy)
+                {
+                    baseLocation.gameObject.SetActive(true);
+                    baseLocation.StartUp();
+                    baseNotices.gameObject.SetActive(false);
+                }
+                else if (physicalDeployLocation != "")
+                {
+                    baseNotices.gameObject.SetActive(false);
+                    dM.currentSaveData.location = physicalDeployLocation;
+                    DataManager.instance.UpdateSaveFile();
+                    AddToGameState();
+                }
+                else
                 {
                     baseLocation.gameObject.SetActive(true);
                     baseLocation.StartUp();
@@ -121,9 +140,9 @@ public class SequenceManager : MonoBehaviour
                 }
                 break;
             case GameStates.definitionA:
-                
-                if(baseDefinitionA.gameObject.activeInHierarchy == false)
-				{
+
+                if (baseDefinitionA.gameObject.activeInHierarchy == false)
+                {
                     baseDefinitionA.gameObject.SetActive(true);
                     baseDefinitionA.StartUp();
                     baseLocation.gameObject.SetActive(false);
@@ -189,7 +208,7 @@ public class SequenceManager : MonoBehaviour
     }
 
     public void AddToGameState()
-	{
+    {
         currentGamestate = (GameStates)((int)currentGamestate + 1);
     }
 }

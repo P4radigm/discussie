@@ -84,8 +84,8 @@ public class BaseMenu : MonoBehaviour
 		raycaster.enabled = false;
 
 		//Setup menu positions
-		artistScreenPos = new Vector2(920, 920);
-		infoScreenPos = new Vector2(-920, -920);
+		artistScreenPos = new Vector2(1170, 1170);
+		infoScreenPos = new Vector2(-1170, -1170);
 		menuScreenPos = Vector2.zero;
 
 		TextMeshProUGUI[] unfilteredTexts = GetComponentsInChildren<TextMeshProUGUI>(true);
@@ -212,24 +212,28 @@ public class BaseMenu : MonoBehaviour
 
 	public void PressWebsite()
 	{
+		if (SequenceManager.instance.isPhysicalDeploy) { return; }
 		string website = "https://studenthome.hku.nl/~leon.vanoldenborgh/";
 		Application.OpenURL(website);
 	}
 
 	public void PressConformeren()
 	{
+		if (SequenceManager.instance.isPhysicalDeploy) { return; }
 		string storelink = pM.android ? "https://studenthome.hku.nl/~leon.vanoldenborgh/AndroidRedirectConformeren" : "https://studenthome.hku.nl/~leon.vanoldenborgh/AppleRedirectConformeren";
 		Application.OpenURL(storelink);
 	}
 
 	public void PressDiscussie()
 	{
+		if (SequenceManager.instance.isPhysicalDeploy) { return; }
 		string storelink = pM.android ? "https://studenthome.hku.nl/~leon.vanoldenborgh/AndroidRedirectDiscussie" : "https://studenthome.hku.nl/~leon.vanoldenborgh/AppleRedirectDiscussie";
 		Application.OpenURL(storelink);
 	}
 
 	public void PressUitzoeken()
 	{
+		if (SequenceManager.instance.isPhysicalDeploy) { return; }
 		string storelink = pM.android ? "https://studenthome.hku.nl/~leon.vanoldenborgh/AndroidRedirectUitzoeken" : "https://studenthome.hku.nl/~leon.vanoldenborgh/AppleRedirectUitzoeken";
 		Application.OpenURL(storelink);
 	}
@@ -314,7 +318,7 @@ public class BaseMenu : MonoBehaviour
 			animateChangeButtonInit = false;
 		}
 
-		if(animateChangeButtonTimeValue > 0 && animateChangeButtonTimeValue <= buttonChangeDuration)
+		if (animateChangeButtonTimeValue > 0 && animateChangeButtonTimeValue <= buttonChangeDuration)
 		{
 			float EvaluatedTimeValue = buttonChangeCurve.Evaluate(animateChangeButtonTimeValue / buttonChangeDuration);
 
@@ -353,7 +357,7 @@ public class BaseMenu : MonoBehaviour
 
 	private void AnimFadeIn()
 	{
-		if(!animateFadeIn) { return; }
+		if (!animateFadeIn) { return; }
 
 		if (animateFadeInInit)
 		{
@@ -373,7 +377,7 @@ public class BaseMenu : MonoBehaviour
 			animateFadeInInit = false;
 		}
 
-		if(animateFadeInTimeValue > 0 && animateFadeInTimeValue <= fadeInDuration)
+		if (animateFadeInTimeValue > 0 && animateFadeInTimeValue <= fadeInDuration)
 		{
 			float EvaluatedTimeValue = fadeInCurve.Evaluate(animateFadeInTimeValue / fadeInDuration);
 
@@ -388,7 +392,7 @@ public class BaseMenu : MonoBehaviour
 				images[i].color = new Color(images[i].color.r, images[i].color.g, images[i].color.b, _newOpacity);
 			}
 		}
-		else if(animateFadeInTimeValue > fadeInDuration)
+		else if (animateFadeInTimeValue > fadeInDuration)
 		{
 			onAnimatedIn.Invoke();
 			raycaster.enabled = true;
