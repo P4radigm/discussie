@@ -23188,7 +23188,7 @@ MonoBehaviour:
     jaar: 2022
   nederlandsDefs: []
   endDefIndex: 18
-  timeBetweenScroll: 0.1
+  timeBetweenScroll: 0.2
   scrollDuration: 4
   delayBeforeAnimate: 0
   animateInDuration: 4
